@@ -1,0 +1,3 @@
+npm run apps-script:login
+npm run apps-script:push
+npm run apps-script:deploy

@@ -1,0 +1,24 @@
+{
+  "name": "StockFlow Enterprise Operations",
+  "short_name": "StockFlow",
+  "description": "Centralized multi-user warehouse inventory & after-sales operations console.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#172334",
+  "theme_color": "#c9822d",
+  "icons": [
+    {
+      "src": "./badbin/assets/badbin-route-mark.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./badbin/assets/badbin-route-mark.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

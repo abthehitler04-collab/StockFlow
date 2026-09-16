@@ -1,0 +1,12 @@
+[
+  {
+    "id": "USR-001",
+    "name": "System Super Admin",
+    "email": "admin@stockflow.internal",
+    "role": "Super Admin",
+    "location": "Main House",
+    "status": "Active",
+    "pinHash": "$2y$10$85ZFuOHg6u6D2bfsn3HSu.Kj4scPbdPmGxmQkL95b7YiicusVYzY6",
+    "createdAt": "2026-09-16T00:00:00Z"
+  }
+]

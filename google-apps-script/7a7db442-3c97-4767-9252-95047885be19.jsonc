@@ -1,0 +1,15 @@
+upload to github, deploy android apk()// Session settings for this agent host session.
+// Edit values below and save to apply. Unknown or non-mutable properties are ignored.
+//
+// sandboxEnabled: Sandbox (default | on | off)
+//   Sandbox behavior for this session. Default follows the global setting.
+// autoApprove: Approvals (default | assisted | autoApprove)
+//   Tool approval behavior for this session
+// permissions: Permissions
+//   Per-tool session permissions. Updated automatically when approving a tool "in this Session".
+// mode: Agent Mode (interactive | plan | autopilot)
+//   How the agent should approach this turn
+{
+  "autoApprove": "default",
+  "mode": "interactive"
+}

@@ -1,0 +1,11 @@
+{
+  "_comment": "StockFlow Enterprise Production Configuration. The API is hosted by InfinityFree and stores data in the protected storage folder.",
+  "APPS_SCRIPT_URL": "api/index.php",
+  "APP_VERSION": "2.0.0-centralized",
+  "COMPANY_NAME": "StockFlow Enterprise",
+  "CURRENCY_SYMBOL": "৳",
+  "LOW_STOCK_THRESHOLD": 10,
+  "ALLOW_NEGATIVE_STOCK": false,
+  "AUTO_SYNC_INTERVAL_MS": 120000,
+  "ENVIRONMENT": "production"
+}

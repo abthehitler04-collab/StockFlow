@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0-centralized",
+  "buildDate": "2026-09-16",
+  "releaseName": "StockFlow Enterprise Centralized",
+  "dataLayer": "Google Sheets + Google Apps Script",
+  "features": [
+    "Multi-user role-based access control",
+    "Centralized Google Sheets real-time synchronization",
+    "Duplicate IMEI & Serial Number live detection",
+    "Multi-stage transfer workflow with gate pass manifests",
+    "Integrated BadBin after-sales intelligence",
+    "Offline-safe submission retry queue",
+    "Automated transaction IDs and audit history"
+  ]
+}

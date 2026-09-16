@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1f33" />
+    <meta name="description" content="BadBin centralized after-sales operations intelligence connected to Google Sheets." />
+    <link rel="icon" type="image/webp" href="./assets/badbin-route-mark.webp" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>BadBin | After-Sales Intelligence</title>
+    <script>
+      // Production Centralized Sync & Bridge
+      (function() {
+        const KEY = 'BADBIN_OPERATIONS_RECORDS_V2';
+        
+        // Listen for updates from StockFlow Master Window
+        window.addEventListener('message', function(event) {
+          if (!event.data || event.data.source !== 'STOCKFLOW_CENTRAL') return;
+          if (event.data.type === 'SYNC_REPAIRS' && Array.isArray(event.data.records)) {
+            try {
+              localStorage.setItem(KEY, JSON.stringify(event.data.records));
+              console.log('[BadBin] Synced with centralized Google Sheets repairs:', event.data.records.length);
+            } catch(e) {}
+          }
+        });
+
+        // Inform parent that BadBin is ready
+        window.addEventListener('DOMContentLoaded', function() {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ source: 'BADBIN_CHILD', type: 'READY' }, '*');
+          }
+        });
+
+        // Label migrations
+        try {
+          for (let i = 0; i < localStorage.length; i += 1) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            const value = localStorage.getItem(key);
+            if (!value || !/(Repared|IMIE|dissimilariteis|UNKNWN)/.test(value)) continue;
+            localStorage.setItem(key, value.replaceAll('Repared', 'Repaired').replaceAll('IMIE', 'IMEI').replaceAll('dissimilariteis', 'dissimilarities').replaceAll('UNKNWN', 'UNKNOWN'));
+          }
+        } catch (_) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-Final20260916.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CktYb_0n.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+
+</html>

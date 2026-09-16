@@ -1,0 +1,14 @@
+{
+  "name": "BadBin After-Sales Intelligence",
+  "short_name": "BadBin",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f2f6f7",
+  "theme_color": "#0b1f33",
+  "description": "After-sales operations intelligence and inventory recovery platform.",
+  "icons": [{
+    "src": "./assets/badbin-route-mark.webp",
+    "sizes": "192x192",
+    "type": "image/webp"
+  }]
+}

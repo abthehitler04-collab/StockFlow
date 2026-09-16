@@ -1,0 +1,26 @@
+.DS_Store
+Thumbs.db
+*.log
+*.zip
+.env
+.env.*
+!*.env.example
+backups/
+*.json.backup
+
+# Android / Flutter build outputs
+apps/android/build/
+apps/android/.dart_tool/
+apps/android/.idea/
+apps/android/.metadata
+apps/android/android/local.properties
+apps/android/android/app/release/
+apps/android/android/key.properties
+apps/android/android/.gradle/
+apps/android/.flutter-plugins
+apps/android/.flutter-plugins-dependencies
+
+# GitHub Actions local artifacts
+*.apk
+*.aab
+*.appbundle

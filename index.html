@@ -1,0 +1,3314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="StockFlow Enterprise — Centralized multi-user warehouse and after-sales inventory management system powered by Google Sheets.">
+<link rel="icon" type="image/webp" href="./badbin/assets/badbin-route-mark.webp">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>StockFlow Enterprise — Centralized Warehouse Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #edf2f7;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --muted-2: #94a3b8;
+  --line: #e2e8f0;
+  --navy: #0f172a;
+  --navy-2: #1e293b;
+  --amber: #d97706;
+  --amber-2: #f59e0b;
+  --amber-pale: #fef3c7;
+  --green: #059669;
+  --green-pale: #d1fae5;
+  --red: #dc2626;
+  --red-pale: #fee2e2;
+  --blue: #2563eb;
+  --blue-pale: #dbeafe;
+  --violet: #7c3aed;
+  --violet-pale: #ede9fe;
+  --shadow: 0 20px 40px -15px rgba(15,23,42,.08);
+  --shadow-sm: 0 4px 12px -2px rgba(15,23,42,.05);
+  --shadow-lg: 0 25px 50px -12px rgba(15,23,42,.25);
+  --r: 16px;
+  --r-sm: 10px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  --canvas: #090d12;
+  --surface: #111822;
+  --surface-2: #182230;
+  --surface-3: #222f42;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --muted-2: #64748b;
+  --line: #223044;
+  --navy: #05080b;
+  --navy-2: #0d131c;
+  --amber-pale: #452405;
+  --green-pale: #06402b;
+  --red-pale: #4c1111;
+  --blue-pale: #142852;
+  --violet-pale: #29184d;
+  --shadow: 0 20px 40px -15px rgba(0,0,0,.5);
+  --shadow-sm: 0 4px 12px -2px rgba(0,0,0,.35);
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,.7);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+/* Layout Grid */
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 256px minmax(0, 1fr);
+  grid-template-rows: 70px minmax(0, 1fr);
+}
+
+/* Sidebar */
+.sidebar {
+  grid-row: 1 / 3;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: 20px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 10;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 8px;
+}
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--amber-2), var(--amber));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  font-size: 20px;
+  box-shadow: 0 6px 18px rgba(217,119,6,.32);
+}
+.brand-text strong {
+  font-size: 17px;
+  letter-spacing: -.03em;
+  display: block;
+}
+.brand-text small {
+  display: block;
+  color: var(--amber);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nav-label {
+  color: var(--muted-2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 6px 12px 4px;
+}
+.nav button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all .16s ease;
+  width: 100%;
+}
+.nav button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.nav button.active {
+  background: var(--amber-pale);
+  color: var(--amber);
+  font-weight: 700;
+}
+.nav .count {
+  margin-left: auto;
+  background: var(--surface-3);
+  color: var(--muted);
+  min-width: 22px;
+  height: 20px;
+  border-radius: 99px;
+  display: grid;
+  place-items: center;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.nav button.active .count {
+  background: rgba(217,119,6,.18);
+  color: var(--amber);
+}
+.glyph {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1;
+}
+.side-spacer { flex: 1; }
+
+/* User Card */
+.user-card {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color .18s;
+}
+.user-card:hover { border-color: var(--amber); }
+.avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--navy-2);
+  color: var(--amber-2);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+.user-info strong {
+  font-size: 12px;
+  display: block;
+}
+.user-info small {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Topbar */
+.topbar {
+  grid-column: 2;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+}
+.topbar-title h1 {
+  font-size: 18px;
+  margin: 2px 0 0;
+  letter-spacing: -.03em;
+}
+.eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--amber);
+  font-weight: 800;
+}
+.top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sync Indicator */
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .2s;
+}
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px var(--green-pale);
+}
+.sync-badge.syncing .sync-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 2px var(--amber-pale);
+  animation: pulse 1s infinite alternate;
+}
+.sync-badge.offline .sync-dot {
+  background: var(--muted);
+  box-shadow: none;
+}
+.sync-badge.error .sync-dot {
+  background: var(--red);
+  box-shadow: 0 0 0 2px var(--red-pale);
+}
+@keyframes pulse { from { opacity: .4; transform: scale(.85); } to { opacity: 1; transform: scale(1.15); } }
+
+.search-box {
+  height: 38px;
+  min-width: 240px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  color: var(--muted);
+}
+.search-box input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+}
+.btn, .icon-btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 11px;
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 12px;
+  transition: all .16s ease;
+}
+.icon-btn { width: 38px; padding: 0; color: var(--muted); }
+.icon-btn:hover, .btn:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+  transform: translateY(-1px);
+}
+.btn.primary {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(217,119,6,.28);
+}
+.btn.primary:hover {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+}
+.btn.success {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.btn.danger {
+  background: var(--red-pale);
+  border-color: transparent;
+  color: var(--red);
+}
+.btn.ghost { background: transparent; }
+.btn.small { height: 32px; padding: 0 10px; font-size: 11px; }
+
+/* Main Content */
+.main {
+  grid-column: 2;
+  padding: 26px 28px 60px;
+  min-width: 0;
+}
+.page { display: none; max-width: 1400px; margin: auto; }
+.page.active {
+  display: block;
+  animation: pageFadeIn .22s cubic-bezier(.16, 1, .3, 1);
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.page-head h2 {
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 4px 0 6px;
+  letter-spacing: -.04em;
+}
+.page-head p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+.page-actions {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Cards & Panels */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+}
+.panel { padding: 20px; }
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.panel-title small {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+/* KPI Banner */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi {
+  padding: 16px 18px;
+  min-height: 125px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kpi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 15px;
+}
+.kpi label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+.kpi-value {
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: -.05em;
+  margin-top: 2px;
+}
+.kpi-sub {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.kpi-bar {
+  position: absolute;
+  height: 3px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Quick Action Buttons */
+.quick {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.quick button {
+  border: 1px dashed var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  transition: all .18s ease;
+}
+.quick button:hover {
+  border-color: var(--amber);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.quick .qicon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--amber-pale);
+  color: var(--amber);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+}
+.quick strong { font-size: 12px; display: block; }
+.quick span span { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; }
+
+/* 2-Column Grid */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Toolbar & Filters */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.select, .input {
+  height: 38px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 11px;
+  color: var(--ink);
+  padding: 0 11px;
+  outline: 0;
+  font-size: 12px;
+}
+.select:focus, .input:focus, textarea:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(217,119,6,.14);
+}
+
+/* Table Styling */
+.table-wrap { overflow-x: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+.data-table th {
+  color: var(--muted-2);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  text-align: left;
+  background: var(--surface-2);
+  padding: 12px 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.data-table tr:hover td {
+  background: color-mix(in srgb, var(--amber-pale) 35%, transparent);
+}
+
+/* Badges & Tags */
+.pill, .tag {
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 99px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.tag.regular { background: var(--blue-pale); color: var(--blue); }
+.tag.lmp { background: var(--violet-pale); color: var(--violet); }
+.tag.repair { background: var(--red-pale); color: var(--red); }
+.tag.refurbished { background: var(--amber-pale); color: var(--amber); }
+
+.tag.pending { background: var(--amber-pale); color: var(--amber); }
+.tag.approved { background: var(--blue-pale); color: var(--blue); }
+.tag.dispatched { background: #e0f2fe; color: #0369a1; }
+.tag.intransit { background: #fef08a; color: #854d0e; }
+.tag.received, .tag.complete { background: var(--green-pale); color: var(--green); }
+.tag.cancelled, .tag.failed { background: var(--red-pale); color: var(--red); }
+
+.stock-chip {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 3px 6px;
+  background: var(--surface-2);
+  font-size: 10px;
+  color: var(--muted);
+  display: inline-flex;
+  gap: 4px;
+}
+.stock-chip b { color: var(--ink); }
+
+/* Forms & Modals */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group.full { grid-column: 1 / -1; }
+.form-group label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.form-control {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0 11px;
+  font-size: 12px;
+}
+.form-control.textarea {
+  height: 74px;
+  padding: 10px;
+  resize: vertical;
+}
+
+/* Modal Window */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  width: min(680px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.modal h2 { font-size: 19px; margin: 0; letter-spacing: -.03em; }
+.modal-head p { font-size: 11px; color: var(--muted); margin: 4px 0 0; }
+.modal-close {
+  border: 0;
+  background: var(--surface-2);
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 18px;
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Duplicate IMEI Collision Box */
+.collision-box {
+  border: 1px solid var(--red);
+  background: var(--red-pale);
+  color: var(--red);
+  padding: 12px 14px;
+  border-radius: 11px;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 10px;
+  display: none;
+}
+.collision-box.show { display: block; }
+.collision-box strong { display: block; font-size: 12px; margin-bottom: 4px; }
+
+/* Banner / Alerts */
+.setup-banner {
+  background: linear-gradient(135deg, var(--navy), #1e293b);
+  color: #fff;
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.setup-banner h3 { margin: 0 0 4px; font-size: 15px; color: var(--amber-2); }
+.setup-banner p { margin: 0; font-size: 12px; color: rgba(255,255,255,.75); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 99;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: all .24s ease;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast.good { border-left: 4px solid var(--green); }
+.toast.bad { border-left: 4px solid var(--red); }
+.toast.warn { border-left: 4px solid var(--amber); }
+
+/* Printable Manifest / Gatepass / Invoice */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .sidebar, .topbar, .mobile-nav, .page-actions, .toolbar, .btn, .icon-btn, .quick { display: none !important; }
+  .app { display: block !important; padding: 0 !important; }
+  .main { padding: 0 !important; }
+  .page { display: block !important; }
+  .page:not(.print-active) { display: none !important; }
+  .printable-document { border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+}
+
+.printable-document {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid var(--line);
+  padding: 28px;
+  border-radius: var(--r);
+}
+.print-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+.print-title { font-size: 22px; font-weight: 900; margin: 0; }
+.print-meta { font-size: 11px; color: #475569; text-align: right; }
+.sig-blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 40px;
+  padding-top: 20px;
+}
+.sig-box {
+  border-top: 1px dashed #94a3b8;
+  padding-top: 8px;
+  font-size: 11px;
+  color: #475569;
+}
+
+/* Mobile Nav */
+.mobile-nav { display: none; }
+
+@media(max-width: 1024px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+@media(max-width: 768px) {
+  .app { display: block; padding-bottom: 74px; }
+  .sidebar { display: none; }
+  .topbar { padding: 0 16px; height: 62px; }
+  .main { padding: 18px 16px 40px; }
+  .search-box { display: none; }
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .quick { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: auto; }
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 8px; right: 8px; bottom: 8px;
+    height: 58px;
+    background: var(--navy);
+    border-radius: 16px;
+    z-index: 40;
+    box-shadow: 0 12px 35px rgba(0,0,0,.35);
+    align-items: center;
+    justify-content: space-around;
+    padding: 3px;
+  }
+  .mobile-nav button {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,.6);
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .mobile-nav button.active { color: var(--amber-2); }
+  .mobile-nav .quick-add {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--amber);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(217,119,6,.4);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="brand-text">
+        <strong>StockFlow</strong>
+        <small>Enterprise Central</small>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Core Operations</div>
+      <nav class="nav">
+        <button data-page="overview" class="active"><span class="glyph">⌂</span>Dashboard</button>
+        <button data-page="inventory"><span class="glyph">▦</span>Master Stock<span class="count" id="navStockCount">0</span></button>
+        <button data-page="movement"><span class="glyph">⇄</span>Stock IN / OUT</button>
+        <button data-page="transfers"><span class="glyph">⇋</span>Transfers<span class="count" id="navTransferCount">0</span></button>
+        <button data-page="pos"><span class="glyph">▣</span>POS Retail</button>
+        <button data-page="badbin"><span class="glyph">◈</span>After-Sales (BadBin)<span class="count" id="navBadbinCount">0</span></button>
+      </nav>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Intelligence & Logs</div>
+      <nav class="nav">
+        <button data-page="reports"><span class="glyph">📊</span>Reports & Analytics</button>
+        <button data-page="audit"><span class="glyph">◷</span>Audit History</button>
+        <button data-page="settings"><span class="glyph">⚙</span>Backend & System</button>
+        <button data-page="admin" id="adminNavButton" hidden><span class="glyph">♙</span>Admin Control</button>
+      </nav>
+    </div>
+
+    <div class="side-spacer"></div>
+
+    <div class="user-card" id="userBadge">
+      <div class="avatar" id="sidebarAvatar">SA</div>
+      <div class="user-info">
+        <strong id="sidebarUserName">Super Admin</strong>
+        <small id="sidebarUserRole">System Administrator</small>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-title">
+      <div class="eyebrow" id="topDate">Live Central Operations</div>
+      <h1 id="topTitle">Dashboard</h1>
+    </div>
+
+    <div class="top-actions">
+      <!-- Sync Status Badge -->
+      <div class="sync-badge" id="syncBadge" title="Click to manually synchronize with Google Sheets">
+        <span class="sync-dot"></span>
+        <span id="syncText">Checking backend…</span>
+      </div>
+
+      <div class="search-box">
+        <span class="glyph">⌕</span>
+        <input id="globalSearch" placeholder="Search IMEI, SKU, reference…" aria-label="Search">
+      </div>
+
+      <button class="btn small" id="btnScanner" title="Open Barcode / QR Scanner">📷 Scan</button>
+      <button class="icon-btn" id="themeBtn" title="Toggle dark/light mode">◐</button>
+      <button class="btn small primary" id="btnSwitchUser">Switch User</button>
+    </div>
+  </header>
+
+  <!-- Main View -->
+  <main class="main">
+    <!-- Setup Banner (Shown if API URL missing) -->
+    <div class="setup-banner" id="setupBanner" style="display: none;">
+      <div>
+        <h3>⚡ Centralized Google Sheets Backend Not Connected</h3>
+        <p>Connect your Google Apps Script Web App URL to unlock multi-user real-time synchronization, duplicate IMEI tracking, and multi-stage transfers.</p>
+      </div>
+      <button class="btn" style="background:#fff;color:#0f172a;" id="bannerConnectBtn">Connect Now →</button>
+    </div>
+
+    <!-- Page: Overview / Dashboard -->
+    <section class="page active" id="page-overview">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Executive Summary</div>
+          <h2>Central Warehouse Overview</h2>
+          <p>Real-time consolidated figures across all warehouse facilities and staging houses.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" data-page-action="inventory">View Register</button>
+          <button class="btn primary" data-open-movement>＋ Record Movement</button>
+        </div>
+      </div>
+
+      <div class="quick">
+        <button data-open-movement><span class="qicon">⇄</span><span><strong>Record Movement</strong><span>IN or OUT transaction</span></span></button>
+        <button data-page-action="transfers"><span class="qicon">⇋</span><span><strong>Warehouse Transfer</strong><span>Request or dispatch</span></span></button>
+        <button data-page-action="pos"><span class="qicon">▣</span><span><strong>Open POS Retail</strong><span>Create sale invoice</span></span></button>
+        <button data-page-action="badbin"><span class="qicon">◈</span><span><strong>BadBin Intake</strong><span>After-sales & repairs</span></span></button>
+      </div>
+
+      <div class="kpis" id="overviewKpis"></div>
+
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Stock Distribution by Brand<small>Live available units</small></div>
+            <button class="btn small ghost" data-page-action="inventory">All Lines →</button>
+          </div>
+          <div id="brandDistributionBars"></div>
+        </section>
+
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Facility & Warehouse Balance<small>Units held per location</small></div>
+            <span class="pill" id="totalFacilityPill">7 Facilities</span>
+          </div>
+          <div id="facilityBalanceList"></div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Floor Attention Queue<small>Low-stock and out-of-stock items</small></div>
+          </div>
+          <div id="attentionQueue"></div>
+        </section>
+
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Recent Central Transactions<small>Latest movements and dispatches</small></div>
+            <button class="btn small ghost" data-page-action="audit">Full Audit →</button>
+          </div>
+          <div id="recentActivityList"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Page: Master Inventory -->
+    <section class="page" id="page-inventory">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Centralized Register</div>
+          <h2>Master Stock Inventory</h2>
+          <p>Opening + IN − OUT + Transfer IN − Transfer OUT + Return − Sold ± Adjustments.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" id="btnAdjustStock">⚖ Stock Adjustment</button>
+          <button class="btn primary" id="btnAddSku">＋ Add SKU Line</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box" style="display:flex; flex:1; min-width:200px;">
+          <span class="glyph">⌕</span>
+          <input id="invFilterSearch" placeholder="Filter by SKU, Brand, Model, House, Color…">
+        </div>
+        <select class="select" id="invFilterType">
+          <option value="">All Stock Types</option>
+          <option value="Regular">Regular</option>
+          <option value="L.M.P">L.M.P</option>
+          <option value="Repair">Repair / Return</option>
+          <option value="Refurbished">Refurbished</option>
+        </select>
+        <select class="select" id="invFilterHouse">
+          <option value="">All Facilities / Houses</option>
+        </select>
+        <select class="select" id="invFilterStatus">
+          <option value="">All Stock Levels</option>
+          <option value="low">Low Stock (≤ 10)</option>
+          <option value="zero">Out of Stock (0)</option>
+          <option value="available">In Stock (> 0)</option>
+        </select>
+        <button class="btn" id="btnExportStock">Download CSV</button>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SKU / Model</th>
+              <th>Brand</th>
+              <th>Type</th>
+              <th>Facility / House</th>
+              <th>Color Breakdown</th>
+              <th>Opening</th>
+              <th>IN</th>
+              <th>OUT</th>
+              <th>Transfer</th>
+              <th>Sold</th>
+              <th>In Hand</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Page: Stock Movement (IN / OUT) -->
+    <section class="page" id="page-movement">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Controlled Ledger Entry</div>
+          <h2>Record Stock Movement</h2>
+          <p>Every movement generates an auditable transaction reference and updates available inventory.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Movement Parameters<small>Reference code is auto-generated</small></div>
+            <span class="pill" id="movementPreviewTrx">TRX-GEN</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Movement Direction</label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button type="button" class="btn success" id="btnDirIn" style="font-weight:800;">↓ Receive Stock (IN)</button>
+                <button type="button" class="btn ghost" id="btnDirOut" style="font-weight:800;">↑ Dispatch Stock (OUT)</button>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>Select SKU / Product Line</label>
+              <select class="form-control" id="moveSkuSelect">
+                <option value="">Select a product line…</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Color Variant</label>
+              <input class="form-control" id="moveColor" placeholder="e.g. Black, Gold">
+            </div>
+
+            <div class="form-group">
+              <label>Quantity</label>
+              <input class="form-control" id="moveQty" type="number" min="1" value="1">
+            </div>
+
+            <div class="form-group">
+              <label>Warehouse / Facility</label>
+              <select class="form-control" id="moveHouseSelect"></select>
+            </div>
+
+            <div class="form-group">
+              <label>Movement Date</label>
+              <input class="form-control" id="moveDate" type="date">
+            </div>
+
+            <div class="form-group full">
+              <label>IMEI / Serial Numbers (Optional, comma or space separated)</label>
+              <textarea class="form-control textarea" id="moveImeis" placeholder="Paste or scan IMEIs here…"></textarea>
+              <div class="collision-box" id="imeiCollisionAlert"></div>
+            </div>
+
+            <div class="form-group full">
+              <label>Reference Note / Bill of Lading</label>
+              <input class="form-control" id="moveNote" placeholder="e.g. Supplier delivery batch #401">
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button class="btn" id="btnResetMoveForm">Reset Form</button>
+            <button class="btn primary" id="btnSubmitMovement">Commit Movement</button>
+          </div>
+        </section>
+
+        <aside class="card panel" style="background:var(--navy); color:#fff;">
+          <div class="eyebrow" style="color:var(--amber-2);">Real-Time Balance Check</div>
+          <h3 style="font-size:22px; margin:8px 0 16px;" id="sideSkuTitle">No SKU Selected</h3>
+          <div style="border-top:1px solid rgba(255,255,255,.1); padding:12px 0;">
+            <div style="font-size:11px; color:rgba(255,255,255,.6);">Selected Facility:</div>
+            <strong id="sideHouseName">—</strong>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,.1); padding:12px 0;">
+            <div style="font-size:11px; color:rgba(255,255,255,.6);">Current In Hand:</div>
+            <strong style="font-size:22px; color:var(--amber-2);" id="sideInHand">—</strong>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,.1); padding:12px 0;">
+            <div style="font-size:11px; color:rgba(255,255,255,.6);">Balance After Transaction:</div>
+            <strong style="font-size:26px; color:#fff;" id="sideAfterBalance">—</strong>
+          </div>
+          <p style="font-size:11px; color:rgba(255,255,255,.5); margin-top:16px;">
+            Transactions are locked during commit via Google Apps Script LockService to prevent concurrent-user stock overwrites.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Page: Transfers IN / OUT -->
+    <section class="page" id="page-transfers">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Multi-Stage Workflow</div>
+          <h2>Warehouse Transfers</h2>
+          <p>Transfer lifecycle: Pending → Approved → Dispatched → In Transit → Received → Complete.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn primary" id="btnNewTransferModal">＋ Create Transfer Request</button>
+        </div>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Transfer Ref</th>
+              <th>From Facility</th>
+              <th>To Facility</th>
+              <th>Items & Qty</th>
+              <th>Status</th>
+              <th>Requested By</th>
+              <th>Carrier / Tracking</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="transferTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Page: POS Retail -->
+    <section class="page" id="page-pos">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Point of Sale</div>
+          <h2>Retail Counter Checkout</h2>
+          <p>Select sellable stock, capture payment, and automatically deduct sold units from warehouse.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section>
+          <div class="toolbar">
+            <div class="search-box" style="display:flex; flex:1;">
+              <span class="glyph">⌕</span>
+              <input id="posProductSearch" placeholder="Search sellable stock…">
+            </div>
+            <select class="select" id="posBrandFilter">
+              <option value="">All Brands</option>
+            </select>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px;" id="posProductsGrid"></div>
+        </section>
+
+        <aside class="card panel" style="display:flex; flex-direction:column; min-height:540px;">
+          <div class="panel-head">
+            <div class="panel-title">Sales Invoice Cart<small id="posCartCount">0 Items</small></div>
+            <button class="btn small ghost" id="btnClearCart">Clear</button>
+          </div>
+
+          <div style="flex:1; overflow-y:auto;" id="posCartItems"></div>
+
+          <div style="border-top:1px solid var(--line); padding-top:14px; margin-top:14px;">
+            <div class="form-group" style="margin-bottom:8px;">
+              <label>Customer Name</label>
+              <input class="form-control" id="posCustomerName" placeholder="Walk-in Customer">
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label>Customer Phone</label>
+              <input class="form-control" id="posCustomerPhone" placeholder="01XXXXXXXXX">
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label>Payment Method</label>
+              <select class="form-control" id="posPaymentMethod">
+                <option value="Cash">Cash</option>
+                <option value="Bank">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Credit">Credit Card / POS</option>
+              </select>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin:8px 0;">
+              <span>Subtotal:</span>
+              <strong id="posSubtotal">৳0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:900; margin:10px 0;">
+              <span>Net Total:</span>
+              <span style="color:var(--amber);" id="posTotal">৳0</span>
+            </div>
+
+            <button class="btn primary" style="width:100%; height:44px; font-size:14px;" id="btnCheckout">Complete Sale & Print Invoice</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Page: BadBin After-Sales Operations -->
+    <section class="page" id="page-badbin">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">After-Sales Intelligence</div>
+          <h2>BadBin Operations & Repairs</h2>
+          <p>Returns, warranty intake, defect triage, technician assignments, and GoodBin recoveries.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn primary" id="btnNewRepairModal">＋ New Repair Ticket</button>
+          <a class="btn" href="./badbin/" target="_blank" rel="noopener">Open Standalone BadBin ↗</a>
+        </div>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>IMEI / Serial</th>
+              <th>Model</th>
+              <th>Defect Category</th>
+              <th>Technician</th>
+              <th>Status</th>
+              <th>Intake Date</th>
+              <th>Destination</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="repairTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Page: Reports & Analytics -->
+    <section class="page" id="page-reports">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Consolidated Intelligence</div>
+          <h2>Reports & Analytics</h2>
+          <p>Audit-grade stock valuations, movement summaries, and performance breakdowns.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" id="btnPrintReport">Print Report View</button>
+        </div>
+      </div>
+
+      <div class="kpis" id="reportKpis"></div>
+
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Stock Valuation by Location</div>
+          </div>
+          <div id="reportLocationTable"></div>
+        </section>
+
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Stock Status Separation</div>
+          </div>
+          <div id="reportTypeBreakdown"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Page: Audit History -->
+    <section class="page" id="page-audit">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Accountability Trail</div>
+          <h2>System Audit History</h2>
+          <p>Every creation, movement, transfer, adjustment, and deletion is permanently recorded.</p>
+        </div>
+      </div>
+
+      <div class="card table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>Module</th>
+              <th>Target Ref</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Page: System & Backend Settings -->
+    <section class="page" id="page-settings">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Infrastructure & Integration</div>
+          <h2>System & Backend Settings</h2>
+          <p>Manage your Google Apps Script API endpoint, roles, locations, and backups.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Google Apps Script Web App Bridge</div>
+          </div>
+          <p style="font-size:12px; color:var(--muted); line-height:1.5;">
+            Paste the Web App deployment URL generated from your Google Sheets Apps Script editor.
+          </p>
+
+          <div class="form-group" style="margin:14px 0;">
+            <label>Web App URL</label>
+            <input class="form-control" id="settingApiUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button class="btn primary" id="btnSaveApiUrl">Test & Save Connection</button>
+            <button class="btn ghost" id="btnTriggerSync">Force Sync Now</button>
+          </div>
+
+          <div style="margin-top:20px; border-top:1px solid var(--line); padding-top:14px;">
+            <div class="panel-title" style="margin-bottom:8px;">Database Maintenance</div>
+            <p style="font-size:11px; color:var(--muted); margin-bottom:12px;">Create an automatic dated snapshot of your master spreadsheet inside Google Drive.</p>
+            <button class="btn" id="btnCreateDriveBackup">Snapshot to Google Drive</button>
+          </div>
+        </section>
+
+        <section class="card panel">
+          <div class="panel-head">
+            <div class="panel-title">Active Warehouse Locations</div>
+          </div>
+          <div id="settingsLocationList"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Page: Administrator Control -->
+    <section class="page" id="page-admin">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Restricted workspace</div>
+          <h2>Administrator Control</h2>
+          <p>Manage staff access and assign operational work in bulk.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <section class="card panel">
+          <div class="panel-head"><div class="panel-title">User Management<small id="adminUserCount">0 accounts</small></div></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Name</label><input class="form-control" id="adminUserName"></div>
+            <div class="form-group"><label>Email</label><input class="form-control" id="adminUserEmail" type="email"></div>
+            <div class="form-group"><label>Role</label><select class="form-control" id="adminUserRole"><option>Admin</option><option>Warehouse Manager</option><option>Logistics</option><option>Sales Executive</option><option>Accounts</option><option>Service</option><option>Viewer</option></select></div>
+            <div class="form-group"><label>Location</label><input class="form-control" id="adminUserLocation" value="Main House"></div>
+            <div class="form-group"><label>PIN</label><input class="form-control" id="adminUserPin" inputmode="numeric" maxlength="12"></div>
+          </div>
+          <button class="btn primary" id="btnAdminCreateUser">Create User</button>
+          <div id="adminUsersList" style="margin-top:16px;"></div>
+        </section>
+        <section class="card panel">
+          <div class="panel-head"><div class="panel-title">Bulk Task Management<small>One task per line</small></div></div>
+          <div class="form-group"><label>Assignee email</label><input class="form-control" id="adminTaskAssignee" type="email"></div>
+          <div class="form-group"><label>Task lines</label><textarea class="form-control textarea" id="adminTaskLines" placeholder="Count Main House stock\nReview pending transfers\nPrepare repair intake"></textarea></div>
+          <button class="btn primary" id="btnAdminAddTasks">Add Tasks</button>
+          <div id="adminTaskList" style="margin-top:16px;"></div>
+          <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px;">
+            <div class="panel-title">Bulk Data Import<small>CSV columns become record fields</small></div>
+            <input class="form-control" id="adminBulkFile" type="file" accept=".csv,text/csv" style="margin:10px 0;">
+            <select class="form-control" id="adminBulkEntity" style="margin-bottom:10px;"><option value="products">Products</option><option value="inventory">Inventory</option><option value="customers">Customers</option><option value="suppliers">Suppliers</option><option value="repairs">Repairs</option></select>
+            <button class="btn" id="btnAdminBulkImport">Import CSV</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<nav class="mobile-nav">
+  <button data-page="overview" class="active"><span class="glyph">⌂</span>Home</button>
+  <button data-page="inventory"><span class="glyph">▦</span>Stock</button>
+  <button class="quick-add" data-open-movement><span class="glyph">＋</span></button>
+  <button data-page="transfers"><span class="glyph">⇋</span>Transfers</button>
+  <button data-page="pos"><span class="glyph">▣</span>POS</button>
+</nav>
+
+<!-- MODAL: Add/Edit SKU Line -->
+<div class="modal-bg" id="skuModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="skuModalTitle">Add SKU Line</h2>
+        <p>Define product variant, brand, house, and initial opening balance.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>SKU / Model Name</label>
+        <input class="form-control" id="inputSkuName" placeholder="e.g. HONOR 600 Pro 12/256">
+      </div>
+      <div class="form-group">
+        <label>Brand</label>
+        <input class="form-control" id="inputSkuBrand" placeholder="e.g. HONOR, REDMI, OnePlus">
+      </div>
+      <div class="form-group">
+        <label>Stock Category</label>
+        <select class="form-control" id="inputSkuType">
+          <option value="Regular">Regular</option>
+          <option value="L.M.P">L.M.P</option>
+          <option value="Repair">Repair / Return</option>
+          <option value="Refurbished">Refurbished</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Facility / House</label>
+        <select class="form-control" id="inputSkuHouse"></select>
+      </div>
+      <div class="form-group">
+        <label>Base Retail Price (৳)</label>
+        <input class="form-control" id="inputSkuPrice" type="number" min="0" value="0">
+      </div>
+      <div class="form-group full">
+        <label>Colors & Opening Units (e.g. Black: 20, Gold: 10)</label>
+        <input class="form-control" id="inputSkuColors" placeholder="Black: 15, Blue: 10">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn primary" id="btnSaveSku">Save SKU Line</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: New Transfer Request -->
+<div class="modal-bg" id="transferModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Create Transfer Request</h2>
+        <p>Transfer units between facilities with multi-stage verification.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Origin Warehouse</label>
+        <select class="form-control" id="trfFromHouse"></select>
+      </div>
+      <div class="form-group">
+        <label>Destination Warehouse</label>
+        <select class="form-control" id="trfToHouse"></select>
+      </div>
+      <div class="form-group full">
+        <label>SKU Line to Transfer</label>
+        <select class="form-control" id="trfSkuSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <input class="form-control" id="trfColor" placeholder="e.g. Black">
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input class="form-control" id="trfQty" type="number" min="1" value="1">
+      </div>
+      <div class="form-group full">
+        <label>Carrier / Transport Details</label>
+        <input class="form-control" id="trfCarrier" placeholder="e.g. Logistics Van Bay 2 / Driver Shanto">
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea class="form-control textarea" id="trfNotes" placeholder="Reason for transfer…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn primary" id="btnSubmitTransfer">Create Transfer Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Stock Adjustment (Physical Verification) -->
+<div class="modal-bg" id="adjustModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Physical Stock Reconciliation</h2>
+        <p>Reconcile counted physical stock against system ledger.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Select SKU Line</label>
+        <select class="form-control" id="adjSkuSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>Facility / House</label>
+        <select class="form-control" id="adjHouseSelect"></select>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <input class="form-control" id="adjColor" placeholder="Color name">
+      </div>
+      <div class="form-group">
+        <label>Actual Physical Count</label>
+        <input class="form-control" id="adjTargetQty" type="number" min="0" value="0">
+      </div>
+      <div class="form-group full">
+        <label>Reconciliation Reason (Required for Audit)</label>
+        <input class="form-control" id="adjReason" placeholder="e.g. Physical inventory cycle count audit">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn primary" id="btnSubmitAdjustment">Commit Reconciliation</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BadBin Repair Ticket -->
+<div class="modal-bg" id="repairModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>BadBin Repair / Intake Ticket</h2>
+        <p>Register returned or defective unit for triage and lab repair.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>IMEI 1</label>
+        <input class="form-control" id="repImei" placeholder="15-digit IMEI">
+      </div>
+      <div class="form-group">
+        <label>Serial Number</label>
+        <input class="form-control" id="repSn" placeholder="Serial number">
+      </div>
+      <div class="form-group">
+        <label>Model</label>
+        <input class="form-control" id="repModel" placeholder="e.g. HONOR 400 Lite">
+      </div>
+      <div class="form-group">
+        <label>Brand</label>
+        <input class="form-control" id="repBrand" placeholder="e.g. HONOR">
+      </div>
+      <div class="form-group">
+        <label>Defect Category</label>
+        <select class="form-control" id="repDefect">
+          <option value="Display / Touch">Display / Touch</option>
+          <option value="Motherboard / Power">Motherboard / Power</option>
+          <option value="Camera">Camera</option>
+          <option value="Audio / Call">Audio / Call</option>
+          <option value="Software / Lock">Software / Lock</option>
+          <option value="Physical Damage">Physical Damage</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned Technician</label>
+        <input class="form-control" id="repTech" placeholder="Technician Name">
+      </div>
+      <div class="form-group full">
+        <label>Triage Symptoms & Notes</label>
+        <textarea class="form-control textarea" id="repNotes" placeholder="Detailed symptoms…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn primary" id="btnSaveRepair">Save Ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Barcode / QR Camera Scanner -->
+<div class="modal-bg" id="scannerModal">
+  <div class="modal" style="width:min(480px, 100%);">
+    <div class="modal-head">
+      <div>
+        <h2>Barcode / QR Scanner</h2>
+        <p>Point camera at IMEI or product barcode.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div style="background:#000; border-radius:14px; overflow:hidden; position:relative; min-height:240px; display:grid; place-items:center;">
+      <video id="scannerVideo" style="width:100%; max-height:300px; object-fit:cover;" autoplay muted playsinline></video>
+      <div id="scannerOverlay" style="position:absolute; inset:20px; border:2px dashed var(--amber-2); border-radius:12px; pointer-events:none;"></div>
+      <div id="scannerStatus" style="position:absolute; bottom:10px; color:#fff; font-size:11px; background:rgba(0,0,0,.6); padding:4px 8px; border-radius:6px;">Camera ready</div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label>Scanned Result / Manual Barcode Input</label>
+      <input class="form-control" id="scannerManualInput" placeholder="Scan or enter code manually…">
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Close</button>
+      <button class="btn primary" id="btnApplyScan">Apply Scan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Switch / Login User -->
+<div class="modal-bg" id="userModal">
+  <div class="modal" style="width:min(440px, 100%);">
+    <div class="modal-head">
+      <div>
+        <h2>Employee Authentication</h2>
+        <p>Select your user profile or enter credentials.</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Select User</label>
+      <select class="form-control" id="loginUserSelect"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Employee PIN</label>
+      <input class="form-control" id="loginUserPin" type="password" placeholder="Enter PIN (Default: 123456)">
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Cancel</button>
+      <button class="btn primary" id="btnLoginSubmit">Authenticate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Printable Gate Pass / Delivery Manifest -->
+<div class="modal-bg" id="printModal">
+  <div class="modal" style="width:min(760px, 100%);">
+    <div class="modal-head">
+      <div>
+        <h2>Document Preview</h2>
+        <p>A4 Standard Warehouse Delivery Gate Pass</p>
+      </div>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div id="printDocContent"></div>
+    <div class="modal-foot">
+      <button class="btn" data-close-modal>Close</button>
+      <button class="btn primary" id="btnTriggerPrint">Print Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+  <span id="toastMark">✓</span>
+  <span id="toastText">System message</span>
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * StockFlow Enterprise Client Engine (v2.0.0-centralized)
+ * Connected to Google Sheets & Google Apps Script API
+ * ============================================================================
+ */
+(function() {
+  'use strict';
+
+  // Constants & Keys
+  const STORAGE_KEYS = {
+    API_URL: 'stockflow_backend_url',
+    CACHE: 'stockflow_central_cache_v2',
+    QUEUE: 'stockflow_offline_queue',
+    USER: 'stockflow_active_user',
+    THEME: 'stockflow_theme'
+    ,TOKEN: 'stockflow_session_token'
+  };
+
+  // Application State (Central Source of Truth)
+  let state = {
+    apiUrl: localStorage.getItem(STORAGE_KEYS.API_URL) || '',
+    token: localStorage.getItem(STORAGE_KEYS.TOKEN) || '',
+    user: JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null') || {
+      id: 'USR-001',
+      name: 'System Super Admin',
+      email: 'admin@stockflow.internal',
+      role: 'Super Admin',
+      location: 'Main House'
+    },
+    users: [],
+    products: [],
+    inventory: [],
+    imei: [],
+    transactions: [],
+    transfers: [],
+    sales: [],
+    customers: [],
+    suppliers: [],
+    locations: [
+      { id: 'LOC-001', name: 'Main House' },
+      { id: 'LOC-002', name: 'New House' },
+      { id: 'LOC-003', name: '2nd Floor' },
+      { id: 'LOC-004', name: 'Temporary House A' },
+      { id: 'LOC-005', name: 'Temporary House B' },
+      { id: 'LOC-006', name: 'Retail Counter' },
+      { id: 'LOC-007', name: 'Service Center (BadBin)' }
+    ],
+    repairs: [],
+    settings: {},
+    tasks: JSON.parse(localStorage.getItem('stockflow_tasks') || '[]'),
+    cart: [],
+    pendingQueue: JSON.parse(localStorage.getItem(STORAGE_KEYS.QUEUE) || '[]'),
+    theme: localStorage.getItem(STORAGE_KEYS.THEME) || 'light',
+    currentPage: 'overview',
+    movementDirection: 'IN',
+    syncStatus: 'idle', // 'idle' | 'syncing' | 'online' | 'offline' | 'error'
+    lastSync: null,
+    appConfig: {} // Loaded from config.json at bootstrap
+  };
+
+  // Helper DOM selectors
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => Number(n || 0).toLocaleString();
+  const money = n => '৳' + fmt(n);
+
+  // Load cached database if present
+  try {
+    const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.CACHE) || 'null');
+    if (cached && cached.data) {
+      Object.assign(state, cached.data);
+      state.lastSync = cached.timestamp;
+    }
+  } catch(e) {}
+
+  /**
+   * Bootstrap: Load config.json from server before initializing the app.
+   * config.json is generated/populated by the deployment pipeline (GitHub Actions).
+   * If APPS_SCRIPT_URL is present in config.json, it takes priority over localStorage.
+   * localStorage override is still respected so users can change it in Settings.
+   */
+  async function loadConfig() {
+    try {
+      const res = await fetch('./config.json?_=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('config.json not found');
+      const cfg = await res.json();
+      state.appConfig = cfg;
+
+      // If config has a URL and localStorage doesn't have a user override, use config URL
+      const localOverride = localStorage.getItem(STORAGE_KEYS.API_URL + '_user_set');
+      if (cfg.APPS_SCRIPT_URL && !localOverride) {
+        state.apiUrl = cfg.APPS_SCRIPT_URL;
+        // Persist it so offline queue works even if config.json is unavailable later
+        localStorage.setItem(STORAGE_KEYS.API_URL, cfg.APPS_SCRIPT_URL);
+      }
+
+      // Apply config-driven settings
+      if (cfg.AUTO_SYNC_INTERVAL_MS) window.__autoSyncInterval = cfg.AUTO_SYNC_INTERVAL_MS;
+      if (cfg.CURRENCY_SYMBOL) window.__currencySymbol = cfg.CURRENCY_SYMBOL;
+      console.info('[StockFlow] config.json loaded:', cfg.ENVIRONMENT || 'unknown env', 'v' + (cfg.APP_VERSION || '?'));
+    } catch (e) {
+      console.warn('[StockFlow] config.json not loaded (local dev or missing):', e.message);
+    }
+  }
+
+  /**
+   * Universal API Client for Google Apps Script Web App
+   * Uses Content-Type: text/plain to prevent CORS preflight blocking in browsers
+   */
+  async function apiCall(action, payload = {}) {
+    if (!state.apiUrl) {
+      throw new Error('Google Apps Script Backend URL is not configured. Please set it in Settings.');
+    }
+
+    const body = JSON.stringify({
+      action,
+      user: state.user,
+      token: state.token,
+      ...payload
+    });
+
+    const res = await fetch(state.apiUrl, {
+      method: 'POST',
+      body,
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: Failed to communicate with backend`);
+    }
+
+    const json = await res.json();
+    if (!json.success) {
+      throw new Error(json.error || 'Server rejected request');
+    }
+    return json;
+  }
+
+  /**
+   * Offline Safe Transaction Queue Dispatcher
+   */
+  async function enqueueTransaction(action, payload, description) {
+    // If online, attempt direct call
+    if (navigator.onLine && state.apiUrl) {
+      try {
+        setSyncStatus('syncing', 'Committing to Google Sheets…');
+        const res = await apiCall(action, payload);
+        toast(res.message || description + ' saved', 'good');
+        // Refresh full state after mutation
+        await syncCentral(false);
+        return res;
+      } catch (err) {
+        console.warn('Direct commit failed, falling back to offline queue:', err);
+      }
+    }
+
+    // Offline or network failed: enqueue safely
+    const queueItem = {
+      id: 'QUEUE-' + Date.now(),
+      action,
+      payload,
+      description,
+      queuedAt: new Date().toISOString()
+    };
+    state.pendingQueue.push(queueItem);
+    localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify(state.pendingQueue));
+    toast(`${description} saved offline (Pending Sync)`, 'warn');
+    setSyncStatus('offline', `Offline (${state.pendingQueue.length} pending)`);
+    return { success: true, offline: true, queueId: queueItem.id };
+  }
+
+  /**
+   * Drain Offline Queue
+   */
+  async function processPendingQueue() {
+    if (!state.pendingQueue.length || !navigator.onLine || !state.apiUrl) return;
+
+    setSyncStatus('syncing', `Syncing ${state.pendingQueue.length} offline transactions…`);
+    const remaining = [];
+
+    for (const item of state.pendingQueue) {
+      try {
+        await apiCall(item.action, item.payload);
+      } catch (e) {
+        console.error('Failed to drain queue item:', item, e);
+        remaining.push(item);
+      }
+    }
+
+    state.pendingQueue = remaining;
+    localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify(remaining));
+
+    if (!remaining.length) {
+      toast('All offline transactions synchronized with Google Sheets', 'good');
+    } else {
+      toast(`${remaining.length} transactions still pending retry`, 'warn');
+    }
+    await syncCentral(false);
+  }
+
+  /**
+   * Synchronize Master State from Google Sheets
+   */
+  async function syncCentral(showToast = true) {
+    if (!state.apiUrl) {
+      setSyncStatus('error', 'Backend not connected');
+      $('setupBanner').style.display = 'flex';
+      renderAll();
+      return;
+    }
+
+    try {
+      setSyncStatus('syncing', 'Synchronizing…');
+      const res = await apiCall('syncAll');
+
+      if (res.data) {
+        Object.assign(state, res.data);
+        state.lastSync = res.timestamp || new Date().toISOString();
+        localStorage.setItem(STORAGE_KEYS.CACHE, JSON.stringify({
+          timestamp: state.lastSync,
+          data: res.data
+        }));
+
+        setSyncStatus('online', 'Online · Synced ' + new Date(state.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        $('setupBanner').style.display = 'none';
+
+        if (showToast) toast('Master database synchronized with InfinityFree storage', 'good');
+
+        // Broadcast to BadBin sub-window if embedded
+        try {
+          const badbinFrame = $('badbinFrame');
+          if (badbinFrame && badbinFrame.contentWindow) {
+            badbinFrame.contentWindow.postMessage({
+              source: 'STOCKFLOW_CENTRAL',
+              type: 'SYNC_REPAIRS',
+              records: state.repairs || []
+            }, '*');
+          }
+        } catch(e) {}
+      }
+
+      // Process any queued items
+      if (state.pendingQueue.length > 0) {
+        processPendingQueue();
+      }
+
+    } catch (err) {
+      console.error('Sync failed:', err);
+      setSyncStatus('error', 'Sync Failed (Click to retry)');
+      if (showToast) toast('Sync failed: ' + err.message, 'bad');
+    } finally {
+      renderAll();
+    }
+  }
+
+  function setSyncStatus(status, text) {
+    state.syncStatus = status;
+    const badge = $('syncBadge');
+    badge.className = 'sync-badge ' + status;
+    $('syncText').textContent = text;
+  }
+
+  function toast(text, kind = 'good') {
+    const el = $('toast');
+    $('toastText').textContent = text;
+    $('toastMark').textContent = kind === 'good' ? '✓' : (kind === 'bad' ? '×' : '!');
+    el.className = 'toast show ' + kind;
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => el.className = 'toast', 3000);
+  }
+
+  // Calculation Engine: In Hand = Opening + IN - OUT + TransferIN - TransferOUT + Return - Sold ± Adjustments
+  function calcInHand(item) {
+    const opening = Number(item.openingQty || 0);
+    const inQty = Number(item.inQty || 0);
+    const outQty = Number(item.outQty || 0);
+    const trfIn = Number(item.transferInQty || 0);
+    const trfOut = Number(item.transferOutQty || 0);
+    const ret = Number(item.returnQty || 0);
+    const sold = Number(item.soldQty || 0);
+    const adj = Number(item.adjustedQty || 0);
+    return opening + inQty - outQty + trfIn - trfOut + ret - sold + adj;
+  }
+
+  // Active Inventory Lines
+  const activeInventory = () => state.inventory || [];
+
+  /**
+   * Navigation Controller
+   */
+  function setPage(page) {
+    if (page === 'admin' && !['Super Admin', 'Admin'].includes(state.user.role)) {
+      toast('Administrator access required', 'bad');
+      return;
+    }
+    state.currentPage = page;
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    document.querySelectorAll('[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+
+    const titles = {
+      overview: 'Dashboard',
+      inventory: 'Master Stock Register',
+      movement: 'Stock IN / OUT',
+      transfers: 'Warehouse Transfers',
+      pos: 'POS Retail Checkout',
+      badbin: 'BadBin Operations & Repairs',
+      reports: 'Reports & Analytics',
+      audit: 'System Audit History',
+      settings: 'System & Backend Settings'
+      ,admin: 'Administrator Control'
+    };
+    $('topTitle').textContent = titles[page] || 'Overview';
+
+    if (page === 'overview') renderOverview();
+    if (page === 'inventory') renderInventory();
+    if (page === 'movement') renderMovementForm();
+    if (page === 'transfers') renderTransfers();
+    if (page === 'pos') renderPOS();
+    if (page === 'badbin') renderBadBin();
+    if (page === 'reports') renderReports();
+    if (page === 'audit') renderAudit();
+    if (page === 'settings') renderSettings();
+    if (page === 'admin') renderAdmin();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Master Render Coordinator
+   */
+  function renderAll() {
+    document.documentElement.dataset.theme = state.theme;
+    $('sidebarUserName').textContent = state.user.name;
+    $('sidebarUserRole').textContent = state.user.role + ' · ' + (state.user.location || 'Central');
+    $('sidebarAvatar').textContent = state.user.name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
+    $('adminNavButton').hidden = !['Super Admin', 'Admin'].includes(state.user.role);
+
+    $('navStockCount').textContent = activeInventory().length;
+    $('navTransferCount').textContent = (state.transfers || []).filter(t => !['Complete', 'Cancelled'].includes(t.status)).length;
+    $('navBadbinCount').textContent = (state.repairs || []).filter(r => r.currentStatus !== 'Repaired').length;
+
+    renderOverview();
+    renderInventory();
+    renderMovementForm();
+    renderTransfers();
+    renderPOS();
+    renderBadBin();
+    renderReports();
+    renderAudit();
+    renderSettings();
+    renderAdmin();
+  }
+
+  function renderAdmin() {
+    const allowed = ['Super Admin', 'Admin'].includes(state.user.role);
+    if (!allowed) return;
+    const users = state.users || [];
+    $('adminUserCount').textContent = `${users.length} accounts`;
+    $('adminUsersList').innerHTML = users.map(user => `
+      <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:9px 0;font-size:12px;">
+        <span><strong>${esc(user.name)}</strong><br><small>${esc(user.email)} · ${esc(user.role)}</small></span>
+        <span class="pill">${esc(user.status || 'Active')}</span>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:12px;">No users loaded.</p>';
+    const tasks = state.tasks || [];
+    $('adminTaskList').innerHTML = tasks.slice().reverse().map(task => `
+      <div style="border-top:1px solid var(--line);padding:9px 0;font-size:12px;">
+        <strong>${esc(task.title)}</strong><br><small>${esc(task.assigneeEmail)} · ${esc(task.status || 'Open')}</small>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:12px;">No assigned tasks.</p>';
+  }
+
+  // ==========================================================================
+  // PAGE RENDERERS
+  // ==========================================================================
+
+  function renderOverview() {
+    const items = activeInventory();
+    const totalInHand = items.reduce((sum, x) => sum + calcInHand(x), 0);
+    const lowCount = items.filter(x => { const n = calcInHand(x); return n > 0 && n <= 10; }).length;
+    const zeroCount = items.filter(x => calcInHand(x) <= 0).length;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const receivedToday = (state.transactions || []).filter(t => t.date === todayStr && t.type === 'IN').reduce((sum, t) => sum + Number(t.qty || 0), 0);
+    const dispatchedToday = (state.transactions || []).filter(t => t.date === todayStr && ['OUT', 'SALE'].includes(t.type)).reduce((sum, t) => sum + Number(t.qty || 0), 0);
+
+    const kpis = [
+      { icon: '▦', title: 'Total In Hand', val: fmt(totalInHand), sub: 'Live units across facilities', color: 'var(--amber)' },
+      { icon: '!', title: 'Low Stock Lines', val: fmt(lowCount), sub: 'Balance ≤ 10 units', color: lowCount ? 'var(--amber)' : 'var(--green)' },
+      { icon: '×', title: 'Out of Stock', val: fmt(zeroCount), sub: 'Zero availability', color: zeroCount ? 'var(--red)' : 'var(--green)' },
+      { icon: '↓', title: 'Received Today', val: fmt(receivedToday), sub: 'IN movements logged', color: 'var(--green)' },
+      { icon: '↑', title: 'Dispatched Today', val: fmt(dispatchedToday), sub: 'OUT / Sales logged', color: 'var(--blue)' }
+    ];
+
+    $('overviewKpis').innerHTML = kpis.map(k => `
+      <div class="card kpi">
+        <div class="kpi-top">
+          <div class="kpi-icon" style="background:${k.color}18; color:${k.color}">${k.icon}</div>
+        </div>
+        <label>${k.title}</label>
+        <div class="kpi-value" style="color:${k.color}">${k.val}</div>
+        <div class="kpi-sub">${k.sub}</div>
+        <div class="kpi-bar" style="background:${k.color}"></div>
+      </div>
+    `).join('');
+
+    // Brand Bars
+    const brands = ['HONOR', 'REDMI', 'OnePlus', 'Other'];
+    const brandTotals = brands.map(b => ({
+      brand: b,
+      units: items.filter(x => b === 'Other' ? !['HONOR','REDMI','OnePlus'].includes(x.brand) : x.brand === b).reduce((s, x) => s + calcInHand(x), 0)
+    }));
+    const maxBrand = Math.max(1, ...brandTotals.map(x => x.units));
+
+    $('brandDistributionBars').innerHTML = brandTotals.map(b => `
+      <div style="margin:12px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+          <strong>${b.brand}</strong>
+          <span style="color:var(--muted);">${fmt(b.units)} units (${Math.round(b.units / Math.max(1, totalInHand) * 100)}%)</span>
+        </div>
+        <div style="height:8px; background:var(--surface-3); border-radius:99px; overflow:hidden;">
+          <div style="height:100%; width:${Math.round(b.units / maxBrand * 100)}%; background:linear-gradient(90deg, var(--amber-2), var(--amber)); border-radius:inherit;"></div>
+        </div>
+      </div>
+    `).join('');
+
+    // Facility Balances
+    const locMap = {};
+    items.forEach(i => {
+      const h = i.house || 'Unassigned';
+      locMap[h] = (locMap[h] || 0) + calcInHand(i);
+    });
+    $('facilityBalanceList').innerHTML = Object.entries(locMap).map(([loc, count]) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+        <div>
+          <strong style="font-size:12px;">${esc(loc)}</strong>
+        </div>
+        <span class="pill" style="font-size:12px; font-weight:800;">${fmt(count)} units</span>
+      </div>
+    `).join('') || '<div style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No stock entries recorded yet.</div>';
+
+    // Attention Queue
+    const attentionLines = items.filter(x => calcInHand(x) <= 10).slice(0, 5);
+    $('attentionQueue').innerHTML = attentionLines.length ? attentionLines.map(x => `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);">
+        <span class="tag ${calcInHand(x) === 0 ? 'cancelled' : 'pending'}">${calcInHand(x) === 0 ? 'Out' : 'Low'}</span>
+        <div>
+          <strong style="font-size:12px;">${esc(x.sku)}</strong>
+          <div style="font-size:11px; color:var(--muted);">${esc(x.house)} · ${esc(x.color)}</div>
+        </div>
+        <div style="margin-left:auto; text-align:right;">
+          <strong style="color:${calcInHand(x) === 0 ? 'var(--red)' : 'var(--amber)'}; font-size:13px;">${calcInHand(x)} in hand</strong>
+        </div>
+      </div>
+    `).join('') : '<div style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">All stock levels healthy.</div>';
+
+    // Recent Activity
+    const recent = [...(state.transactions || [])].reverse().slice(0, 5);
+    $('recentActivityList').innerHTML = recent.length ? recent.map(t => `
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);">
+        <span class="tag ${t.type === 'IN' ? 'complete' : 'cancelled'}">${esc(t.type)}</span>
+        <div>
+          <strong style="font-size:12px;">${esc(t.sku)}</strong>
+          <div style="font-size:10px; color:var(--muted);">${esc(t.house)} · ${esc(t.qty)} units · ${esc(t.user)}</div>
+        </div>
+        <div style="margin-left:auto; font-size:11px; color:var(--muted);">${esc(t.date)}</div>
+      </div>
+    `).join('') : '<div style="color:var(--muted); font-size:12px; padding:20px; text-align:center;">No recent movements.</div>';
+  }
+
+  function renderInventory() {
+    const filterQuery = ($('invFilterSearch')?.value || '').toLowerCase().trim();
+    const filterType = $('invFilterType')?.value || '';
+    const filterHouse = $('invFilterHouse')?.value || '';
+    const filterStatus = $('invFilterStatus')?.value || '';
+
+    // Populate Location dropdown if empty
+    const houseSelect = $('invFilterHouse');
+    if (houseSelect && houseSelect.options.length <= 1) {
+      state.locations.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc.name;
+        opt.textContent = loc.name;
+        houseSelect.appendChild(opt);
+      });
+    }
+
+    let list = activeInventory();
+    if (filterQuery) {
+      list = list.filter(x => [x.sku, x.brand, x.house, x.color, x.type].join(' ').toLowerCase().includes(filterQuery));
+    }
+    if (filterType) list = list.filter(x => x.type === filterType);
+    if (filterHouse) list = list.filter(x => x.house === filterHouse);
+    if (filterStatus === 'low') list = list.filter(x => { const n = calcInHand(x); return n > 0 && n <= 10; });
+    if (filterStatus === 'zero') list = list.filter(x => calcInHand(x) <= 0);
+    if (filterStatus === 'available') list = list.filter(x => calcInHand(x) > 0);
+
+    const tbody = $('inventoryTableBody');
+    if (!tbody) return;
+
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:32px; color:var(--muted);">No inventory lines match your filters.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+      const inHand = calcInHand(item);
+      const statusColor = inHand <= 0 ? 'var(--red)' : (inHand <= 10 ? 'var(--amber)' : 'var(--green)');
+
+      return `
+        <tr>
+          <td>
+            <strong>${esc(item.sku)}</strong>
+          </td>
+          <td>${esc(item.brand)}</td>
+          <td><span class="tag ${item.type === 'L.M.P' ? 'lmp' : (item.type === 'Repair' ? 'repair' : 'regular')}">${esc(item.type)}</span></td>
+          <td>${esc(item.house)}</td>
+          <td><span class="stock-chip">${esc(item.color)} <b>${inHand}</b></span></td>
+          <td style="color:var(--muted);">${fmt(item.openingQty)}</td>
+          <td style="color:var(--green); font-weight:700;">+${fmt(item.inQty)}</td>
+          <td style="color:var(--red); font-weight:700;">-${fmt(item.outQty)}</td>
+          <td><span style="font-size:11px; color:var(--muted);">+${fmt(item.transferInQty)} / -${fmt(item.transferOutQty)}</span></td>
+          <td style="color:var(--blue);">${fmt(item.soldQty)}</td>
+          <td><strong style="font-size:14px; color:${statusColor};">${fmt(inHand)}</strong></td>
+          <td>
+            <button class="btn small ghost" data-quick-move="${item.id}" title="Record Movement">⇄</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind quick movement buttons
+    document.querySelectorAll('[data-quick-move]').forEach(btn => {
+      btn.onclick = () => {
+        const item = state.inventory.find(i => i.id === btn.dataset.quickMove);
+        if (item) {
+          setPage('movement');
+          $('moveSkuSelect').value = item.sku;
+          $('moveColor').value = item.color;
+          $('moveHouseSelect').value = item.house;
+          updateMovementSidePreview();
+        }
+      };
+    });
+  }
+
+  function renderMovementForm() {
+    const skuSelect = $('moveSkuSelect');
+    const houseSelect = $('moveHouseSelect');
+    if (!skuSelect || !houseSelect) return;
+
+    // Populate SKU select
+    const uniqueSkus = [...new Set(activeInventory().map(i => i.sku))];
+    skuSelect.innerHTML = '<option value="">Select a product line…</option>' + uniqueSkus.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+    // Populate Locations select
+    houseSelect.innerHTML = state.locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
+
+    // Set today's date if empty
+    if (!$('moveDate').value) {
+      $('moveDate').value = new Date().toISOString().slice(0, 10);
+    }
+
+    updateMovementSidePreview();
+  }
+
+  function updateMovementSidePreview() {
+    const sku = $('moveSkuSelect')?.value || '';
+    const house = $('moveHouseSelect')?.value || '';
+    const color = $('moveColor')?.value || '';
+    const qty = Number($('moveQty')?.value || 1);
+    const dir = state.movementDirection;
+
+    $('movementPreviewTrx').textContent = dir + ' · ' + qty + ' units';
+    $('sideSkuTitle').textContent = sku || 'No SKU Selected';
+    $('sideHouseName').textContent = (house || '—') + (color ? ' (' + color + ')' : '');
+
+    const match = activeInventory().find(i => i.sku === sku && i.house === house && (!color || i.color === color));
+    const inHand = match ? calcInHand(match) : 0;
+    const after = dir === 'IN' ? inHand + qty : inHand - qty;
+
+    $('sideInHand').textContent = fmt(inHand) + ' units';
+    $('sideAfterBalance').textContent = fmt(Math.max(0, after)) + ' units';
+    $('sideAfterBalance').style.color = after < 0 ? 'var(--red)' : '#fff';
+  }
+
+  function renderTransfers() {
+    const tbody = $('transferTableBody');
+    if (!tbody) return;
+
+    const list = [...(state.transfers || [])].reverse();
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:32px; color:var(--muted);">No warehouse transfers recorded yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(t => {
+      let itemsSummary = '';
+      try {
+        const items = typeof t.items === 'string' ? JSON.parse(t.items) : (t.items || []);
+        itemsSummary = items.map(i => `${i.sku} (${i.qty})`).join(', ');
+      } catch(e) {
+        itemsSummary = t.totalUnits + ' units';
+      }
+
+      const statusTag = t.status.toLowerCase().replace(' ', '');
+
+      return `
+        <tr>
+          <td><strong>${esc(t.transferRef)}</strong></td>
+          <td>${esc(t.fromLocation)}</td>
+          <td>${esc(t.toLocation)}</td>
+          <td><span style="font-size:11px;">${esc(itemsSummary)}</span></td>
+          <td><span class="tag ${statusTag}">${esc(t.status)}</span></td>
+          <td>${esc(t.requestedBy)}</td>
+          <td>${esc(t.carrier || '—')}</td>
+          <td>${esc(t.requestedDate)}</td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              ${t.status === 'Pending' ? `<button class="btn small success" data-trf-approve="${t.transferRef}">Approve</button>` : ''}
+              ${t.status === 'Approved' ? `<button class="btn small primary" data-trf-dispatch="${t.transferRef}">Dispatch</button>` : ''}
+              ${t.status === 'Dispatched' || t.status === 'In Transit' ? `<button class="btn small success" data-trf-receive="${t.transferRef}">Receive</button>` : ''}
+              <button class="btn small ghost" data-trf-print="${t.transferRef}" title="Print Gate Pass">🖨</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Bind transfer action buttons
+    document.querySelectorAll('[data-trf-approve]').forEach(b => b.onclick = () => updateTransfer(b.dataset.trfApprove, 'Approved'));
+    document.querySelectorAll('[data-trf-dispatch]').forEach(b => b.onclick = () => updateTransfer(b.dataset.trfDispatch, 'Dispatched'));
+    document.querySelectorAll('[data-trf-receive]').forEach(b => b.onclick = () => updateTransfer(b.dataset.trfReceive, 'Complete'));
+    document.querySelectorAll('[data-trf-print]').forEach(b => b.onclick = () => printTransferManifest(b.dataset.trfPrint));
+  }
+
+  async function updateTransfer(transferRef, newStatus) {
+    try {
+      await enqueueTransaction('updateTransferStatus', { transferRef, newStatus }, `Transfer ${transferRef} → ${newStatus}`);
+    } catch(err) {
+      toast(err.message, 'bad');
+    }
+  }
+
+  function printTransferManifest(transferRef) {
+    const trf = (state.transfers || []).find(t => t.transferRef === transferRef);
+    if (!trf) return;
+
+    let items = [];
+    try { items = typeof trf.items === 'string' ? JSON.parse(trf.items) : (trf.items || []); } catch(e) {}
+
+    $('printDocContent').innerHTML = `
+      <div class="printable-document">
+        <div class="print-head">
+          <div>
+            <h1 class="print-title">STOCKFLOW DELIVERY MANIFEST / GATE PASS</h1>
+            <p style="margin:4px 0 0; color:#475569; font-size:12px;">Official Warehouse Transfer Authorization</p>
+          </div>
+          <div class="print-meta">
+            <div><strong>MANIFEST #: ${esc(trf.transferRef)}</strong></div>
+            <div>Date: ${esc(trf.requestedDate || new Date().toISOString().slice(0, 10))}</div>
+            <div>Status: ${esc(trf.status)}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; font-size:12px; background:#f8fafc; padding:12px; border-radius:8px;">
+          <div>
+            <strong>ORIGIN FACILITY (DISPATCH FROM):</strong>
+            <div style="font-size:13px; margin-top:2px;">${esc(trf.fromLocation)}</div>
+            <div style="color:#64748b; font-size:11px;">Authorized by: ${esc(trf.approvedBy || trf.requestedBy)}</div>
+          </div>
+          <div>
+            <strong>DESTINATION FACILITY (RECEIVE AT):</strong>
+            <div style="font-size:13px; margin-top:2px;">${esc(trf.toLocation)}</div>
+            <div style="color:#64748b; font-size:11px;">Carrier: ${esc(trf.carrier || 'Internal Fleet')}</div>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+          <thead>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="padding:8px 10px; text-align:left;">#</th>
+              <th style="padding:8px 10px; text-align:left;">SKU / Model</th>
+              <th style="padding:8px 10px; text-align:left;">Color</th>
+              <th style="padding:8px 10px; text-align:right;">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((it, idx) => `
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:8px 10px;">${idx + 1}</td>
+                <td style="padding:8px 10px;"><strong>${esc(it.sku)}</strong></td>
+                <td style="padding:8px 10px;">${esc(it.color)}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:800;">${fmt(it.qty)}</td>
+              </tr>
+            `).join('')}
+            <tr style="background:#f1f5f9; font-weight:900;">
+              <td colspan="3" style="padding:10px; text-align:right;">TOTAL UNITS:</td>
+              <td style="padding:10px; text-align:right;">${fmt(trf.totalUnits)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${trf.imeis ? `
+          <div style="margin-bottom:20px; font-size:11px; color:#334155;">
+            <strong>ITEMIZED SERIAL / IMEI REGISTRY:</strong>
+            <p style="margin:4px 0 0; word-break:break-all; font-family:monospace;">${esc(trf.imeis)}</p>
+          </div>
+        ` : ''}
+
+        <div class="sig-blocks">
+          <div class="sig-box">
+            <strong>DISPATCHED BY (SIGNATURE):</strong><br>
+            Name: ${esc(trf.dispatchedBy || trf.requestedBy)}<br>
+            Date & Time: _______________________
+          </div>
+          <div class="sig-box">
+            <strong>RECEIVED & VERIFIED BY (SIGNATURE):</strong><br>
+            Name: ${esc(trf.receivedBy || '________________________')}<br>
+            Date & Time: _______________________
+          </div>
+        </div>
+      </div>
+    `;
+
+    openModal('printModal');
+  }
+
+  function renderPOS() {
+    const grid = $('posProductsGrid');
+    if (!grid) return;
+
+    const brandFilter = $('posBrandFilter')?.value || '';
+    const searchQuery = ($('posProductSearch')?.value || '').toLowerCase().trim();
+
+    let sellable = activeInventory().filter(x => x.type !== 'Repair' && calcInHand(x) > 0);
+    if (brandFilter) sellable = sellable.filter(x => x.brand === brandFilter);
+    if (searchQuery) sellable = sellable.filter(x => x.sku.toLowerCase().includes(searchQuery));
+
+    if (!sellable.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--muted);">No sellable stock in hand.</div>';
+      return;
+    }
+
+    grid.innerHTML = sellable.map(item => `
+      <div class="card panel" style="padding:12px; cursor:pointer;" data-add-pos="${item.id}">
+        <div style="height:70px; border-radius:8px; background:linear-gradient(135deg, var(--navy), #1e293b); display:grid; place-items:center; color:var(--amber-2); font-size:26px; font-weight:900; margin-bottom:8px;">
+          ${esc(item.brand.slice(0, 1))}
+        </div>
+        <strong style="font-size:12px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.sku)}</strong>
+        <div style="font-size:10px; color:var(--muted); margin:3px 0 6px;">${esc(item.color)} · ${calcInHand(item)} avail</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:900; font-size:13px;">${money(item.basePrice || 25000)}</span>
+          <button class="btn small primary" style="height:26px; padding:0 8px;">Add</button>
+        </div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('[data-add-pos]').forEach(b => {
+      b.onclick = () => addToCart(b.dataset.addPos);
+    });
+
+    renderCart();
+  }
+
+  function addToCart(invId) {
+    const item = state.inventory.find(i => i.id === invId);
+    if (!item) return;
+
+    const inHand = calcInHand(item);
+    const inCart = state.cart.find(c => c.inventoryId === invId);
+
+    if (inCart) {
+      if (inCart.qty >= inHand) {
+        toast('Cannot exceed available stock in hand', 'bad');
+        return;
+      }
+      inCart.qty++;
+    } else {
+      state.cart.push({
+        inventoryId: invId,
+        sku: item.sku,
+        color: item.color,
+        price: item.basePrice || 25000,
+        qty: 1
+      });
+    }
+    renderCart();
+    toast('Added to cart', 'good');
+  }
+
+  function renderCart() {
+    const wrap = $('posCartItems');
+    if (!wrap) return;
+
+    const count = state.cart.reduce((s, c) => s + c.qty, 0);
+    const subtotal = state.cart.reduce((s, c) => s + c.price * c.qty, 0);
+
+    $('posCartCount').textContent = count + ' Units';
+    $('posSubtotal').textContent = money(subtotal);
+    $('posTotal').textContent = money(subtotal);
+
+    if (!state.cart.length) {
+      wrap.innerHTML = '<div style="text-align:center; padding:50px 20px; color:var(--muted); font-size:12px;">Cart is empty.<br>Click sellable products to add.</div>';
+      return;
+    }
+
+    wrap.innerHTML = state.cart.map((item, idx) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+        <div>
+          <strong style="font-size:12px; display:block;">${esc(item.sku)}</strong>
+          <small style="color:var(--muted);">${esc(item.color)} · ${money(item.price)}</small>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="btn small" style="width:24px; height:24px; padding:0;" data-cart-dec="${idx}">−</button>
+          <strong style="font-size:12px;">${item.qty}</strong>
+          <button class="btn small" style="width:24px; height:24px; padding:0;" data-cart-inc="${idx}">＋</button>
+        </div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('[data-cart-dec]').forEach(b => {
+      b.onclick = () => {
+        const idx = Number(b.dataset.cartDec);
+        state.cart[idx].qty--;
+        if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
+        renderCart();
+      };
+    });
+
+    document.querySelectorAll('[data-cart-inc]').forEach(b => {
+      b.onclick = () => {
+        const idx = Number(b.dataset.cartInc);
+        const inv = state.inventory.find(i => i.id === state.cart[idx].inventoryId);
+        if (inv && state.cart[idx].qty >= calcInHand(inv)) {
+          toast('Cannot exceed available stock in hand', 'bad');
+          return;
+        }
+        state.cart[idx].qty++;
+        renderCart();
+      };
+    });
+  }
+
+  async function checkoutSale() {
+    if (!state.cart.length) return toast('Cart is empty', 'bad');
+
+    const customerName = $('posCustomerName')?.value.trim() || 'Walk-in Customer';
+    const customerPhone = $('posCustomerPhone')?.value.trim() || '';
+    const paymentMethod = $('posPaymentMethod')?.value || 'Cash';
+
+    const items = state.cart.map(c => ({
+      sku: c.sku,
+      color: c.color,
+      qty: c.qty,
+      price: c.price
+    }));
+
+    try {
+      const res = await enqueueTransaction('processSale', {
+        customerName,
+        customerPhone,
+        paymentMethod,
+        items
+      }, 'POS Sale');
+
+      state.cart = [];
+      renderCart();
+
+      // Print Invoice Preview
+      printInvoiceDocument({
+        invoiceNo: res.invoiceNo || 'INV-POS-PENDING',
+        customerName,
+        customerPhone,
+        paymentMethod,
+        items,
+        total: items.reduce((s, c) => s + c.price * c.qty, 0)
+      });
+
+    } catch(err) {
+      toast(err.message, 'bad');
+    }
+  }
+
+  function printInvoiceDocument(inv) {
+    $('printDocContent').innerHTML = `
+      <div class="printable-document">
+        <div class="print-head">
+          <div>
+            <h1 class="print-title">RETAIL SALES INVOICE</h1>
+            <p style="margin:4px 0 0; color:#475569; font-size:12px;">StockFlow Mobile Distribution</p>
+          </div>
+          <div class="print-meta">
+            <div><strong>INVOICE #: ${esc(inv.invoiceNo)}</strong></div>
+            <div>Date: ${new Date().toISOString().slice(0, 10)}</div>
+            <div>Payment: ${esc(inv.paymentMethod)} (PAID)</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px; font-size:12px;">
+          <strong>CUSTOMER DETAILS:</strong>
+          <div>Name: ${esc(inv.customerName)}</div>
+          <div>Phone: ${esc(inv.customerPhone || 'N/A')}</div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+          <thead>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="padding:8px; text-align:left;">Item</th>
+              <th style="padding:8px; text-align:left;">Color</th>
+              <th style="padding:8px; text-align:right;">Qty</th>
+              <th style="padding:8px; text-align:right;">Rate</th>
+              <th style="padding:8px; text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${inv.items.map(it => `
+              <tr style="border-bottom:1px solid #e2e8f0;">
+                <td style="padding:8px;">${esc(it.sku)}</td>
+                <td style="padding:8px;">${esc(it.color)}</td>
+                <td style="padding:8px; text-align:right;">${fmt(it.qty)}</td>
+                <td style="padding:8px; text-align:right;">${money(it.price)}</td>
+                <td style="padding:8px; text-align:right;">${money(it.price * it.qty)}</td>
+              </tr>
+            `).join('')}
+            <tr style="background:#f8fafc; font-weight:900;">
+              <td colspan="4" style="padding:10px; text-align:right;">GRAND TOTAL:</td>
+              <td style="padding:10px; text-align:right;">${money(inv.total)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="text-align:center; font-size:11px; color:#64748b; margin-top:30px;">
+          Thank you for choosing StockFlow Mobile. Please retain this invoice for warranty verification.
+        </div>
+      </div>
+    `;
+    openModal('printModal');
+  }
+
+  function renderBadBin() {
+    const tbody = $('repairTableBody');
+    if (!tbody) return;
+
+    const list = [...(state.repairs || [])].reverse();
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:32px; color:var(--muted);">No repair or after-sales records in Google Sheets.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(r => `
+      <tr>
+        <td><strong>${esc(r.ticketNo || r.id)}</strong></td>
+        <td><span style="font-family:monospace;">${esc(r.imei || r.serialNumber || '—')}</span></td>
+        <td><strong>${esc(r.model)}</strong></td>
+        <td><span class="tag repair">${esc(r.defectType)}</span></td>
+        <td>${esc(r.technician || 'Unassigned')}</td>
+        <td><span class="tag ${r.currentStatus === 'Repaired' ? 'complete' : 'pending'}">${esc(r.currentStatus)}</span></td>
+        <td>${esc(r.intakeDate)}</td>
+        <td>${esc(r.destination || 'Service Lab')}</td>
+        <td>
+          ${r.currentStatus !== 'Repaired' ? `<button class="btn small success" data-repair-complete="${r.id}">GoodBin Return</button>` : '<span style="color:var(--green); font-size:11px;">✓ Repaired</span>'}
+        </td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('[data-repair-complete]').forEach(b => {
+      b.onclick = async () => {
+        const rep = state.repairs.find(r => r.id === b.dataset.repairComplete);
+        if (rep) {
+          await enqueueTransaction('saveRepair', {
+            id: rep.id,
+            imei: rep.imei,
+            currentStatus: 'Repaired',
+            destination: 'GoodBin - Repaired'
+          }, 'Mark Repaired');
+        }
+      };
+    });
+  }
+
+  function renderReports() {
+    const items = activeInventory();
+    const totalUnits = items.reduce((s, x) => s + calcInHand(x), 0);
+    const totalValue = items.reduce((s, x) => s + calcInHand(x) * (x.basePrice || 25000), 0);
+
+    $('reportKpis').innerHTML = `
+      <div class="card kpi">
+        <label>Total Inventory Units</label>
+        <div class="kpi-value" style="color:var(--amber);">${fmt(totalUnits)}</div>
+        <div class="kpi-sub">Across all warehouses</div>
+      </div>
+      <div class="card kpi">
+        <label>Estimated Value</label>
+        <div class="kpi-value" style="color:var(--green);">${money(totalValue)}</div>
+        <div class="kpi-sub">At current retail base rate</div>
+      </div>
+      <div class="card kpi">
+        <label>Total Active Lines</label>
+        <div class="kpi-value" style="color:var(--blue);">${items.length}</div>
+        <div class="kpi-sub">Distinct SKU variants</div>
+      </div>
+    `;
+
+    // Location Table
+    const locTotals = {};
+    items.forEach(i => {
+      locTotals[i.house] = (locTotals[i.house] || 0) + calcInHand(i);
+    });
+    $('reportLocationTable').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Warehouse Facility</th><th>Available Balance</th><th>Share</th></tr></thead>
+        <tbody>
+          ${Object.entries(locTotals).map(([h, c]) => `
+            <tr>
+              <td><strong>${esc(h)}</strong></td>
+              <td>${fmt(c)} units</td>
+              <td>${Math.round(c / Math.max(1, totalUnits) * 100)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Type Breakdown
+    const typeTotals = {};
+    items.forEach(i => {
+      typeTotals[i.type] = (typeTotals[i.type] || 0) + calcInHand(i);
+    });
+    $('reportTypeBreakdown').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Stock Type</th><th>Units in Hand</th></tr></thead>
+        <tbody>
+          ${Object.entries(typeTotals).map(([t, c]) => `
+            <tr>
+              <td><span class="tag ${t === 'L.M.P' ? 'lmp' : (t === 'Repair' ? 'repair' : 'regular')}">${esc(t)}</span></td>
+              <td><strong>${fmt(c)} units</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderAudit() {
+    const tbody = $('auditTableBody');
+    if (!tbody) return;
+
+    const list = [...(state.transactions || [])].reverse().slice(0, 100);
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--muted);">No audit events recorded yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(t => `
+      <tr>
+        <td style="font-size:11px; color:var(--muted);">${esc(t.timestamp || t.date)}</td>
+        <td><strong>${esc(t.user)}</strong></td>
+        <td><span class="pill" style="font-size:10px;">${esc(t.role)}</span></td>
+        <td><span class="tag ${t.type === 'IN' ? 'complete' : (t.type === 'OUT' || t.type === 'SALE' ? 'cancelled' : 'pending')}">${esc(t.type)}</span></td>
+        <td>${esc(t.sku)}</td>
+        <td><span style="font-family:monospace;">${esc(t.trxRef || t.id)}</span></td>
+        <td style="color:var(--muted); font-size:11px;">${esc(t.reason || '—')}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderSettings() {
+    $('settingApiUrl').value = state.apiUrl;
+
+    $('settingsLocationList').innerHTML = state.locations.map(loc => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+        <div>
+          <strong style="font-size:12px;">${esc(loc.name)}</strong>
+          <div style="font-size:10px; color:var(--muted);">${esc(loc.type || 'Warehouse')}</div>
+        </div>
+        <span class="pill" style="color:var(--green);">Active</span>
+      </div>
+    `).join('');
+  }
+
+  // ==========================================================================
+  // MODALS & ACTIONS
+  // ==========================================================================
+
+  function openModal(id) { $(id).classList.add('open'); }
+  function closeModal(id) { $(id).classList.remove('open'); }
+
+  // Check Duplicate IMEI live
+  let imeiTimer = null;
+  async function checkDuplicateImeiLive(val) {
+    clearTimeout(imeiTimer);
+    const box = $('imeiCollisionAlert');
+    if (!val || !val.trim()) {
+      box.classList.remove('show');
+      return;
+    }
+
+    imeiTimer = setTimeout(async () => {
+      try {
+        const res = await apiCall('checkDuplicateImei', { imei1: val.trim() });
+        if (res.isDuplicate && res.duplicates.length > 0) {
+          const d = res.duplicates[0];
+          box.innerHTML = `
+            <strong>⚠ Duplicate Record Detected:</strong>
+            ${d.matchedField} (${d.matchedValue}) already exists in central database!<br>
+            Current Location: <b>${esc(d.currentLocation)}</b> · Status: <b>${esc(d.status)}</b> · SKU: <b>${esc(d.sku)}</b>
+          `;
+          box.classList.add('show');
+        } else {
+          box.classList.remove('show');
+        }
+      } catch(e) {}
+    }, 400);
+  }
+
+  // Barcode / Camera Scanner
+  let videoStream = null;
+  let scannerLoop = null;
+  async function startCameraScanner() {
+    openModal('scannerModal');
+    const video = $('scannerVideo');
+    const status = $('scannerStatus');
+
+    status.textContent = 'Camera ready (point barcode inside frame)';
+
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      video.srcObject = videoStream;
+      await video.play();
+      if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+        status.textContent = 'Scanning…';
+        const scan = async () => {
+          if (!videoStream) return;
+          try {
+            const matches = await detector.detect(video);
+            if (matches.length && matches[0].rawValue) {
+              $('scannerManualInput').value = matches[0].rawValue;
+              status.textContent = 'Code captured';
+              return;
+            }
+          } catch (error) {
+            status.textContent = 'Use manual input if scanning is unavailable';
+          }
+          scannerLoop = requestAnimationFrame(scan);
+        };
+        scannerLoop = requestAnimationFrame(scan);
+      }
+    } catch(err) {
+      status.textContent = 'Camera access denied or unavailable: ' + err.message;
+    }
+  }
+
+  function stopCameraScanner() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(t => t.stop());
+      videoStream = null;
+    }
+    if (scannerLoop) cancelAnimationFrame(scannerLoop);
+    scannerLoop = null;
+    closeModal('scannerModal');
+  }
+
+  // Event Handlers Setup
+  function bindEvents() {
+    window.addEventListener('message', event => {
+      if (event.data && event.data.source === 'BADBIN_CHILD' && event.data.type === 'NOTIFY') {
+        toast(event.data.message || 'BadBin update received', event.data.kind || 'good');
+      }
+    });
+    // Navigation
+    document.querySelectorAll('[data-page]').forEach(b => b.onclick = () => setPage(b.dataset.page));
+    document.querySelectorAll('[data-page-action]').forEach(b => b.onclick = () => setPage(b.dataset.pageAction));
+    document.querySelectorAll('[data-open-movement]').forEach(b => b.onclick = () => setPage('movement'));
+    document.querySelectorAll('[data-close-modal]').forEach(b => b.onclick = () => b.closest('.modal-bg').classList.remove('open'));
+
+    // Manual Sync Button
+    $('syncBadge').onclick = () => syncCentral(true);
+
+    // Setup Banner Button
+    $('bannerConnectBtn').onclick = () => setPage('settings');
+
+    // Global Search
+    $('globalSearch').oninput = e => {
+      const q = e.target.value.trim();
+      if (q) {
+        setPage('inventory');
+        $('invFilterSearch').value = q;
+        renderInventory();
+      }
+    };
+
+    // Theme Toggle
+    $('themeBtn').onclick = () => {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(STORAGE_KEYS.THEME, state.theme);
+      document.documentElement.dataset.theme = state.theme;
+      toast('Theme switched to ' + state.theme, 'good');
+    };
+
+    // User Switch Modal
+    $('btnSwitchUser').onclick = () => {
+      const select = $('loginUserSelect');
+      select.innerHTML = (state.users.length ? state.users : [
+        { name: 'System Super Admin', email: 'admin@stockflow.internal', role: 'Super Admin' },
+        { name: 'Warehouse Floor Manager', email: 'floor@stockflow.internal', role: 'Warehouse Manager' },
+        { name: 'Logistics Lead', email: 'logistics@stockflow.internal', role: 'Logistics' },
+        { name: 'Retail Sales Exec', email: 'sales@stockflow.internal', role: 'Sales Executive' },
+        { name: 'After-Sales Technician', email: 'service@stockflow.internal', role: 'Service' }
+      ]).map(u => `<option value="${esc(u.email)}">${esc(u.name)} (${esc(u.role)})</option>`).join('');
+      openModal('userModal');
+    };
+
+    $('btnLoginSubmit').onclick = async () => {
+      const email = $('loginUserSelect').value;
+      const pin = $('loginUserPin').value.trim();
+      try {
+        if (state.apiUrl) {
+          const res = await apiCall('login', { email, pin: pin || '123456' });
+          if (res.user) {
+            state.user = res.user;
+            state.token = res.token || '';
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.user));
+            localStorage.setItem(STORAGE_KEYS.TOKEN, state.token);
+            toast('Authenticated as ' + res.user.name, 'good');
+            closeModal('userModal');
+            renderAll();
+            await syncCentral(false);
+            return;
+          }
+        }
+        // Local simulation if offline
+        const simulated = state.users.find(u => u.email === email) || {
+          id: 'USR-' + Date.now(),
+          name: $('loginUserSelect').options[$('loginUserSelect').selectedIndex].text.split('(')[0].trim(),
+          email,
+          role: 'Admin',
+          location: 'Main House'
+        };
+        state.user = simulated;
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(simulated));
+        toast('Logged in as ' + simulated.name, 'good');
+        closeModal('userModal');
+        renderAll();
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Barcode Scanner button
+    $('btnScanner').onclick = startCameraScanner;
+    $('btnApplyScan').onclick = () => {
+      const val = $('scannerManualInput').value.trim();
+      if (val) {
+        setPage('movement');
+        $('moveImeis').value = val;
+        checkDuplicateImeiLive(val);
+      }
+      stopCameraScanner();
+    };
+
+    // Inventory Filters
+    ['invFilterSearch', 'invFilterType', 'invFilterHouse', 'invFilterStatus'].forEach(id => {
+      $(id)?.addEventListener('input', renderInventory);
+    });
+
+    // Add SKU Line Modal
+    $('btnAddSku').onclick = () => {
+      const houseSel = $('inputSkuHouse');
+      houseSel.innerHTML = state.locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
+      openModal('skuModal');
+    };
+
+    $('btnSaveSku').onclick = async () => {
+      const sku = $('inputSkuName').value.trim();
+      const brand = $('inputSkuBrand').value.trim();
+      const type = $('inputSkuType').value;
+      const house = $('inputSkuHouse').value;
+      const price = Number($('inputSkuPrice').value || 0);
+      const colorsRaw = $('inputSkuColors').value.trim();
+
+      if (!sku || !brand) return toast('SKU Name and Brand are required', 'bad');
+
+      try {
+        await enqueueTransaction('saveProduct', {
+          sku,
+          brand,
+          type,
+          house,
+          basePrice: price,
+          colors: colorsRaw
+        }, 'SKU Line ' + sku);
+
+        closeModal('skuModal');
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Movement Direction Toggle
+    $('btnDirIn').onclick = () => {
+      state.movementDirection = 'IN';
+      $('btnDirIn').className = 'btn success';
+      $('btnDirOut').className = 'btn ghost';
+      updateMovementSidePreview();
+    };
+    $('btnDirOut').onclick = () => {
+      state.movementDirection = 'OUT';
+      $('btnDirOut').className = 'btn danger';
+      $('btnDirIn').className = 'btn ghost';
+      updateMovementSidePreview();
+    };
+
+    ['moveSkuSelect', 'moveHouseSelect', 'moveColor', 'moveQty'].forEach(id => {
+      $(id)?.addEventListener('input', updateMovementSidePreview);
+    });
+
+    $('moveImeis').oninput = e => checkDuplicateImeiLive(e.target.value);
+
+    // Commit Stock Movement
+    $('btnSubmitMovement').onclick = async () => {
+      const sku = $('moveSkuSelect').value;
+      const house = $('moveHouseSelect').value;
+      const color = $('moveColor').value.trim();
+      const qty = Number($('moveQty').value || 1);
+      const date = $('moveDate').value;
+      const note = $('moveNote').value.trim();
+      const imeisRaw = $('moveImeis').value.trim();
+
+      if (!sku || !house || !color) return toast('Choose a SKU, facility, and color', 'bad');
+
+      const imeis = imeisRaw.split(/[\n, ]+/).filter(Boolean).map(s => ({ imei1: s }));
+
+      try {
+        await enqueueTransaction('saveMovement', {
+          sku,
+          house,
+          color,
+          direction: state.movementDirection,
+          qty,
+          date,
+          note,
+          imeis
+        }, `${state.movementDirection} ${qty}x ${sku}`);
+
+        $('moveNote').value = '';
+        $('moveImeis').value = '';
+        $('imeiCollisionAlert').classList.remove('show');
+        updateMovementSidePreview();
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Transfers Modal
+    $('btnNewTransferModal').onclick = () => {
+      const fromSel = $('trfFromHouse');
+      const toSel = $('trfToHouse');
+      const skuSel = $('trfSkuSelect');
+
+      fromSel.innerHTML = state.locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
+      toSel.innerHTML = state.locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
+      if (toSel.options.length > 1) toSel.selectedIndex = 1;
+
+      const uniqueSkus = [...new Set(activeInventory().map(i => i.sku))];
+      skuSel.innerHTML = uniqueSkus.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+      openModal('transferModal');
+    };
+
+    $('btnSubmitTransfer').onclick = async () => {
+      const fromLocation = $('trfFromHouse').value;
+      const toLocation = $('trfToHouse').value;
+      const sku = $('trfSkuSelect').value;
+      const color = $('trfColor').value.trim() || 'Standard';
+      const qty = Number($('trfQty').value || 1);
+      const carrier = $('trfCarrier').value.trim();
+      const notes = $('trfNotes').value.trim();
+
+      if (fromLocation === toLocation) return toast('Origin and destination cannot be identical', 'bad');
+
+      try {
+        await enqueueTransaction('createTransfer', {
+          fromLocation,
+          toLocation,
+          items: [{ sku, color, qty }],
+          carrier,
+          notes
+        }, 'Transfer Request');
+
+        closeModal('transferModal');
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Stock Adjustment Modal
+    $('btnAdjustStock').onclick = () => {
+      const skuSel = $('adjSkuSelect');
+      const houseSel = $('adjHouseSelect');
+      skuSel.innerHTML = [...new Set(activeInventory().map(i => i.sku))].map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+      houseSel.innerHTML = state.locations.map(l => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('');
+      openModal('adjustModal');
+    };
+
+    $('btnSubmitAdjustment').onclick = async () => {
+      const sku = $('adjSkuSelect').value;
+      const house = $('adjHouseSelect').value;
+      const color = $('adjColor').value.trim();
+      const newInHandQty = Number($('adjTargetQty').value || 0);
+      const reason = $('adjReason').value.trim();
+
+      if (!sku || !house || !color) return toast('SKU, facility, and color are required', 'bad');
+      if (!reason) return toast('Please provide a reason for the adjustment', 'bad');
+
+      try {
+        await enqueueTransaction('adjustStock', {
+          sku,
+          house,
+          color,
+          newInHandQty,
+          reason
+        }, 'Physical Reconciliation');
+
+        closeModal('adjustModal');
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // POS Checkout
+    $('btnCheckout').onclick = checkoutSale;
+    $('btnClearCart').onclick = () => { state.cart = []; renderCart(); };
+
+    // BadBin Repair Modal
+    $('btnNewRepairModal').onclick = () => openModal('repairModal');
+    $('btnSaveRepair').onclick = async () => {
+      const imei = $('repImei').value.trim();
+      const serialNumber = $('repSn').value.trim();
+      const model = $('repModel').value.trim();
+      const brand = $('repBrand').value.trim();
+      const defectType = $('repDefect').value;
+      const technician = $('repTech').value.trim();
+      const defectNotes = $('repNotes').value.trim();
+
+      if (!model) return toast('Model name is required', 'bad');
+
+      try {
+        await enqueueTransaction('saveRepair', {
+          imei,
+          serialNumber,
+          model,
+          brand,
+          defectType,
+          technician,
+          defectNotes,
+          currentStatus: 'Received'
+        }, 'Repair Ticket');
+
+        closeModal('repairModal');
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Settings Backend URL Save
+    $('btnSaveApiUrl').onclick = async () => {
+      const url = $('settingApiUrl').value.trim();
+      if (!url) return toast('Please enter a valid Web App URL', 'bad');
+
+      state.apiUrl = url;
+      localStorage.setItem(STORAGE_KEYS.API_URL, url);
+      // Mark that the user has manually set a URL (prevents config.json from overriding it)
+      localStorage.setItem(STORAGE_KEYS.API_URL + '_user_set', '1');
+      toast('Testing backend connection…', 'good');
+      await syncCentral(true);
+    };
+
+    $('btnTriggerSync').onclick = () => syncCentral(true);
+
+    $('btnAdminCreateUser').onclick = async () => {
+      if (!['Super Admin', 'Admin'].includes(state.user.role)) return toast('Administrator access required', 'bad');
+      const name = $('adminUserName').value.trim();
+      const email = $('adminUserEmail').value.trim();
+      const role = $('adminUserRole').value;
+      const location = $('adminUserLocation').value.trim() || 'Main House';
+      const pin = $('adminUserPin').value.trim();
+      if (!name || !email) return toast('Name and email are required', 'bad');
+      try {
+        await apiCall('saveUser', { name, email, role, location, pin, status: 'Active' });
+        toast('User account created', 'good');
+        ['adminUserName', 'adminUserEmail', 'adminUserPin'].forEach(id => $(id).value = '');
+        await syncCentral(false);
+      } catch (err) { toast(err.message, 'bad'); }
+    };
+
+    $('btnAdminAddTasks').onclick = async () => {
+      if (!['Super Admin', 'Admin'].includes(state.user.role)) return toast('Administrator access required', 'bad');
+      const assigneeEmail = $('adminTaskAssignee').value.trim();
+      const tasks = $('adminTaskLines').value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      if (!assigneeEmail || !tasks.length) return toast('Assignee email and task lines are required', 'bad');
+      try {
+        const result = await apiCall('saveTaskBatch', { assigneeEmail, tasks });
+        state.tasks = [...(state.tasks || []), ...(result.tasks || [])];
+        localStorage.setItem('stockflow_tasks', JSON.stringify(state.tasks));
+        $('adminTaskLines').value = '';
+        renderAdmin();
+        toast(result.message || 'Tasks assigned', 'good');
+      } catch (err) { toast(err.message, 'bad'); }
+    };
+
+    $('btnAdminBulkImport').onclick = async () => {
+      if (!['Super Admin', 'Admin'].includes(state.user.role)) return toast('Administrator access required', 'bad');
+      const file = $('adminBulkFile').files[0];
+      if (!file) return toast('Choose a CSV file first', 'bad');
+      const lines = (await file.text()).split(/\r?\n/).filter(line => line.trim());
+      if (lines.length < 2) return toast('CSV must include a header and at least one row', 'bad');
+      const parse = line => line.match(/("(?:[^"]|"")*"|[^,]*)/g).filter(Boolean).slice(0, -1).map(value => value.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+      const headers = parse(lines[0]);
+      const records = lines.slice(1).map(line => { const values = parse(line); return headers.reduce((record, header, index) => { record[header] = values[index] || ''; return record; }, {}); });
+      try {
+        const result = await apiCall('bulkImport', { entity: $('adminBulkEntity').value, records });
+        toast(result.message || 'CSV imported', 'good');
+        $('adminBulkFile').value = '';
+        await syncCentral(false);
+      } catch (err) { toast(err.message, 'bad'); }
+    };
+
+    $('btnCreateDriveBackup').onclick = async () => {
+      try {
+        toast('Creating Google Drive snapshot…', 'good');
+        const res = await apiCall('createBackup');
+        toast(res.message, 'good');
+      } catch(err) {
+        toast(err.message, 'bad');
+      }
+    };
+
+    // Print Triggers
+    $('btnTriggerPrint').onclick = () => window.print();
+    $('btnPrintReport').onclick = () => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('print-active'));
+      $('page-reports').classList.add('print-active');
+      window.print();
+    };
+
+    // Export CSV
+    $('btnExportStock').onclick = () => {
+      const rows = [
+        ['SKU', 'Brand', 'Stock Type', 'Facility', 'Color', 'Opening', 'IN', 'OUT', 'In Hand'],
+        ...activeInventory().map(i => [
+          i.sku, i.brand, i.type, i.house, i.color, i.openingQty || 0, i.inQty || 0, i.outQty || 0, calcInHand(i)
+        ])
+      ];
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `stockflow-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      toast('Inventory CSV downloaded', 'good');
+    };
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  /**
+   * Main Application Initialization
+   * Loads config.json first, then renders and syncs.
+   */
+  async function init() {
+    await loadConfig();
+
+    bindEvents();
+    renderAll();
+
+    // Sync immediately if backend is configured (from config.json or previous localStorage)
+    if (state.apiUrl) {
+      syncCentral(false);
+    } else {
+      setSyncStatus('error', 'Backend not connected');
+      $('setupBanner').style.display = 'flex';
+    }
+
+    // Auto-sync on the interval defined in config (default: 45s)
+    const syncInterval = window.__autoSyncInterval || 45000;
+    setInterval(() => {
+      if (navigator.onLine && state.apiUrl && state.syncStatus !== 'syncing') {
+        syncCentral(false);
+      }
+    }, syncInterval);
+
+    // Re-sync when tab comes back online after being offline
+    window.addEventListener('online', () => {
+      if (state.apiUrl) {
+        toast('Connection restored — syncing…', 'good');
+        processPendingQueue().then(() => syncCentral(false));
+      }
+    });
+  }
+
+  // Start the app
+  init();
+
+})();
+</script>
+</body>
+</html>
