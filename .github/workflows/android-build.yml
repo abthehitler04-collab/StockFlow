@@ -9,6 +9,11 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      STOCKFLOW_KEYSTORE_BASE64: ${{ secrets.STOCKFLOW_KEYSTORE_BASE64 }}
+      STOCKFLOW_KEYSTORE_PASSWORD: ${{ secrets.STOCKFLOW_KEYSTORE_PASSWORD }}
+      STOCKFLOW_KEY_ALIAS: ${{ secrets.STOCKFLOW_KEY_ALIAS }}
+      STOCKFLOW_KEY_PASSWORD: ${{ secrets.STOCKFLOW_KEY_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -35,12 +40,7 @@ jobs:
         run: flutter build apk --debug
 
       - name: Build release APK
-        if: ${{ secrets.STOCKFLOW_KEYSTORE_BASE64 != '' }}
-        env:
-          STOCKFLOW_KEYSTORE_BASE64: ${{ secrets.STOCKFLOW_KEYSTORE_BASE64 }}
-          STOCKFLOW_KEYSTORE_PASSWORD: ${{ secrets.STOCKFLOW_KEYSTORE_PASSWORD }}
-          STOCKFLOW_KEY_ALIAS: ${{ secrets.STOCKFLOW_KEY_ALIAS }}
-          STOCKFLOW_KEY_PASSWORD: ${{ secrets.STOCKFLOW_KEY_PASSWORD }}
+        if: env.STOCKFLOW_KEYSTORE_BASE64 != ''
         working-directory: apps/android/android
         run: |
           echo "$STOCKFLOW_KEYSTORE_BASE64" | base64 --decode > app/upload-keystore.jks
@@ -58,7 +58,7 @@ jobs:
           path: apps/android/build/app/outputs/flutter-apk/*.apk
 
       - name: Upload release APK artifact
-        if: ${{ secrets.STOCKFLOW_KEYSTORE_BASE64 != '' }}
+        if: env.STOCKFLOW_KEYSTORE_BASE64 != ''
         uses: actions/upload-artifact@v4
         with:
           name: stockflow-android-release-apk
