@@ -55,9 +55,19 @@ const PERMISSION_MATRIX = {
   'MANAGE_PRODUCTS': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.WAREHOUSE_MGR],
   'MANAGE_REPAIRS': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.SERVICE],
   'MANAGE_USERS': [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  'RECONCILE_PAYMENT': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTS],
+  'MATCH_TRANSFER': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.WAREHOUSE_MGR, ROLES.LOGISTICS],
+  'EXPORT_AUDIT': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTS],
   'DELETE_DATA': [ROLES.SUPER_ADMIN],
   'EXPORT_DATA': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.WAREHOUSE_MGR, ROLES.ACCOUNTS]
 };
+
+const AUDIT_EVENT_TYPES = [
+  'LOGIN', 'INITIALIZE', 'RECEIVE_STOCK', 'DISPATCH_STOCK', 'CREATE_TRANSFER',
+  'UPDATE_TRANSFER_STATUS', 'MATCH_TRANSFER', 'PROCESS_SALE', 'RETURN_SALE',
+  'RECONCILE_PAYMENT', 'CREATE_REPAIR', 'UPDATE_REPAIR', 'CREATE_BACKUP',
+  'EXPORT_AUDIT', 'CREATE_USER', 'UPDATE_USER', 'ASSIGN_TASK', 'UPDATE'
+];
 
 /**
  * HTTP GET Handler (Health check, JSONP, Quick Sync)
@@ -76,7 +86,14 @@ function doGet(e) {
   }
   
   if (action === 'syncAll') {
-    return jsonResponse(handleSyncAll(params.userEmail || 'system'), params.callback);
+    try {
+      const user = resolveRequestUser_({ email: params.userEmail });
+      checkPermission(user.role, 'VIEW');
+      return jsonResponse(handleSyncAll(user.email), params.callback);
+    } catch (err) {
+      const apiError = normalizeApiError_(err);
+      return jsonResponse({ success: false, error: apiError.message, errorCode: apiError.code }, params.callback);
+    }
   }
 
   return jsonResponse({
@@ -114,10 +131,22 @@ function doPost(e) {
     }
 
     const action = payload.action;
-    const user = payload.user || { email: 'system@stockflow.internal', role: 'Super Admin', name: 'System' };
+    let user = payload.user || null;
 
     if (!action) {
       return jsonResponse({ success: false, error: 'Action parameter is required.' });
+    }
+
+    if (!['login', 'setupDatabase'].includes(action)) {
+      user = resolveRequestUser_(user);
+    }
+
+    const idempotencyKey = String(payload.idempotencyKey || '').trim();
+    if (idempotencyKey) {
+      const priorRequest = getRowsAsObjects(SHEETS.AUDIT_LOG).find(row => String(row.targetId) === idempotencyKey);
+      if (priorRequest) {
+        return jsonResponse({ success: true, duplicateRequest: true, idempotencyKey, message: 'Request already applied.' });
+      }
     }
 
     // Action Router
@@ -132,6 +161,7 @@ function doPost(e) {
         break;
 
       case 'syncAll':
+        checkPermission(user.role, 'VIEW');
         result = handleSyncAll(user.email);
         break;
 
@@ -147,6 +177,11 @@ function doPost(e) {
 
       case 'updateTransferStatus':
         result = handleUpdateTransferStatus(payload, user);
+        break;
+
+      case 'matchTransferScan':
+        checkPermission(user.role, 'MATCH_TRANSFER');
+        result = handleMatchTransferScan(payload, user);
         break;
 
       case 'processSale':
@@ -192,6 +227,20 @@ function doPost(e) {
         result = handleGetAuditLog(payload);
         break;
 
+      case 'exportAuditReport':
+        checkPermission(user.role, 'EXPORT_AUDIT');
+        result = handleExportAuditReport(payload, user);
+        break;
+
+      case 'reconcilePayment':
+        checkPermission(user.role, 'RECONCILE_PAYMENT');
+        result = handleReconcilePayment(payload, user);
+        break;
+
+      case 'validateOcrCandidate':
+        result = handleValidateOcrCandidate(payload);
+        break;
+
       case 'saveUser':
         checkPermission(user.role, 'MANAGE_USERS');
         result = handleSaveUser(payload, user);
@@ -206,13 +255,28 @@ function doPost(e) {
         result = { success: false, error: 'Unknown API action: ' + action };
     }
 
+    if (idempotencyKey && result && result.success !== false) {
+      logAudit_({
+        user: user.name,
+        userRole: user.role,
+        action: action,
+        module: 'API',
+        targetId: idempotencyKey,
+        previousValue: '',
+        newValue: { applied: true },
+        reason: 'Idempotent request applied successfully'
+      });
+    }
+
     return jsonResponse(result);
 
   } catch (err) {
+    const apiError = normalizeApiError_(err);
     return jsonResponse({
       success: false,
-      error: err.message || 'An unexpected server error occurred',
-      stack: err.stack
+      error: apiError.message,
+      errorCode: apiError.code,
+      retryable: apiError.retryable
     });
   } finally {
     lock.releaseLock();
@@ -244,6 +308,24 @@ function checkPermission(userRole, permissionRequired) {
   }
 }
 
+function resolveRequestUser_(candidate) {
+  if (!candidate || !candidate.email) {
+    throw new Error('Authenticated user context is required.');
+  }
+  const email = String(candidate.email).trim().toLowerCase();
+  const user = getRowsAsObjects(SHEETS.USERS).find(row =>
+    String(row.email).trim().toLowerCase() === email && String(row.status).toLowerCase() === 'active'
+  );
+  if (!user) throw new Error('Authenticated user is not active or is not allowlisted.');
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    location: user.location
+  };
+}
+
 /**
  * Generate Secure Unique IDs
  */
@@ -258,6 +340,56 @@ function generateId(prefix) {
  */
 function getDb() {
   return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function normalizeIdentifier_(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .trim()
+    .replace(/[\s-]+/g, '')
+    .toUpperCase();
+}
+
+function normalizeSerial_(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+}
+
+function isValidImei_(value) {
+  const imei = normalizeIdentifier_(value);
+  if (!/^\d{15}$/.test(imei)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < imei.length - 1; i++) {
+    let digit = Number(imei[i]);
+    if ((imei.length - i) % 2 === 0) digit *= 2;
+    sum += digit > 9 ? digit - 9 : digit;
+  }
+  return (sum + Number(imei[imei.length - 1])) % 10 === 0;
+}
+
+function normalizeDate_(value, fallback) {
+  const candidate = value === undefined || value === null || value === '' ? fallback : value;
+  const date = candidate instanceof Date ? candidate : new Date(candidate);
+  if (isNaN(date.getTime())) return String(fallback || new Date().toISOString()).slice(0, 10);
+  return Utilities.formatDate(date, 'GMT', 'yyyy-MM-dd');
+}
+
+function normalizeApiError_(err) {
+  const message = err && err.message ? String(err.message) : 'An unexpected server error occurred';
+  const isSheetsError = /sheet|spreadsheet|range|service unavailable|quota|timed out/i.test(message);
+  return {
+    message,
+    code: isSheetsError ? 'SHEETS_OPERATION_FAILED' : 'API_REQUEST_FAILED',
+    retryable: isSheetsError || /busy|timeout|temporarily/i.test(message)
+  };
+}
+
+function classifyAuditAction_(action, module) {
+  const value = String(action || 'UPDATE').toUpperCase();
+  if (value === 'BACKUP') return 'CREATE_BACKUP';
+  return AUDIT_EVENT_TYPES.includes(value) ? value : 'UPDATE';
 }
 
 /**
@@ -510,7 +642,7 @@ function logAudit_(entry) {
       new Date().toISOString(),
       entry.user || 'Unknown',
       entry.userRole || 'Viewer',
-      entry.action || 'UPDATE',
+      classifyAuditAction_(entry.action, entry.module),
       entry.module || 'System',
       entry.targetId || '',
       typeof entry.previousValue === 'object' ? JSON.stringify(entry.previousValue) : String(entry.previousValue || ''),
@@ -626,34 +758,46 @@ function handleSyncAll(userEmail) {
  * Checks imei1, imei2, and serialNumber across centralized database
  */
 function handleCheckDuplicateImei(payload) {
-  const imei1 = (payload.imei1 || '').trim();
-  const imei2 = (payload.imei2 || '').trim();
-  const sn = (payload.serialNumber || '').trim();
+  const imei1 = normalizeIdentifier_(payload.imei1);
+  const imei2 = normalizeIdentifier_(payload.imei2);
+  const sn = normalizeSerial_(payload.serialNumber);
   const excludeId = payload.excludeId || '';
 
   if (!imei1 && !imei2 && !sn) {
     return { success: true, isDuplicate: false };
   }
 
+  const invalidImeis = [imei1, imei2].filter(value => value && !isValidImei_(value));
+  if (invalidImeis.length > 0) {
+    return {
+      success: false,
+      isDuplicate: false,
+      error: 'IMEI must be exactly 15 digits and pass the Luhn checksum.',
+      errorCode: 'INVALID_IMEI'
+    };
+  }
+  if (imei1 && imei2 && imei1 === imei2) {
+    return { success: false, isDuplicate: true, error: 'IMEI 1 and IMEI 2 cannot be identical.', errorCode: 'DUPLICATE_INPUT' };
+  }
+
   const imeiRows = getRowsAsObjects(SHEETS.IMEI);
   const duplicates = [];
+  const requested = new Map();
+  if (imei1) requested.set(imei1, 'IMEI 1');
+  if (imei2) requested.set(imei2, 'IMEI 2');
+  if (sn) requested.set(sn, 'Serial Number');
 
   for (const row of imeiRows) {
     if (excludeId && String(row.id) === String(excludeId)) continue;
 
-    let matchedField = null;
-    let matchedValue = null;
-
-    if (imei1 && (String(row.imei1).trim() === imei1 || String(row.imei2).trim() === imei1)) {
-      matchedField = 'IMEI 1';
-      matchedValue = imei1;
-    } else if (imei2 && (String(row.imei1).trim() === imei2 || String(row.imei2).trim() === imei2)) {
-      matchedField = 'IMEI 2';
-      matchedValue = imei2;
-    } else if (sn && String(row.serialNumber).trim() === sn) {
-      matchedField = 'Serial Number';
-      matchedValue = sn;
-    }
+    const existing = [
+      { field: 'IMEI 1', value: normalizeIdentifier_(row.imei1) },
+      { field: 'IMEI 2', value: normalizeIdentifier_(row.imei2) },
+      { field: 'Serial Number', value: normalizeSerial_(row.serialNumber) }
+    ];
+    const match = existing.find(item => item.value && requested.has(item.value));
+    const matchedField = match ? requested.get(match.value) : null;
+    const matchedValue = match ? match.value : null;
 
     if (matchedField) {
       duplicates.push({
@@ -697,8 +841,25 @@ function handleSaveMovement(payload, user) {
   );
 
   const now = new Date().toISOString();
-  const movementDate = date || now.slice(0, 10);
+  const movementDate = normalizeDate_(date, now);
   const trxRef = generateId('TRX');
+
+  const normalizedImeis = Array.isArray(imeis) ? imeis.map(record => ({
+    imei1: normalizeIdentifier_(record && record.imei1 !== undefined ? record.imei1 : record),
+    imei2: normalizeIdentifier_(record && record.imei2),
+    serialNumber: normalizeSerial_(record && record.serialNumber)
+  })) : [];
+  if (normalizedImeis.some(record => record.imei1 && !isValidImei_(record.imei1))) {
+    return { success: false, error: 'Each IMEI must be exactly 15 digits and pass the Luhn checksum.', errorCode: 'INVALID_IMEI' };
+  }
+  const duplicateValues = normalizedImeis.flatMap(record => [record.imei1, record.imei2, record.serialNumber]).filter(Boolean);
+  if (new Set(duplicateValues).size !== duplicateValues.length) {
+    return { success: false, error: 'The submitted IMEI/serial values contain duplicates.', errorCode: 'DUPLICATE_INPUT' };
+  }
+  for (const record of normalizedImeis) {
+    const duplicateResult = handleCheckDuplicateImei(record);
+    if (!duplicateResult.success || duplicateResult.isDuplicate) return duplicateResult;
+  }
 
   let currentOpening = 0, currentIn = 0, currentOut = 0, currentTransferIn = 0, currentTransferOut = 0, currentReturn = 0, currentRepair = 0, currentSold = 0, currentAdjusted = 0;
 
@@ -767,25 +928,27 @@ function handleSaveMovement(payload, user) {
 
   // Update IMEI registers if provided
   if (Array.isArray(imeis) && imeis.length > 0) {
-    for (const imeiRecord of imeis) {
-      const imei1 = (imeiRecord.imei1 || imeiRecord).toString().trim();
+    for (const imeiRecord of normalizedImeis) {
+      const imei1 = imeiRecord.imei1;
       const existingImeis = getRowsAsObjects(SHEETS.IMEI);
-      const match = existingImeis.find(i => String(i.imei1).trim() === imei1);
+      const match = existingImeis.find(i => normalizeIdentifier_(i.imei1) === imei1 || normalizeIdentifier_(i.imei2) === imei1 || normalizeSerial_(i.serialNumber) === imeiRecord.serialNumber);
 
       if (direction === 'IN') {
         if (match) {
           updateRowById(SHEETS.IMEI, match.id, {
-            status: 'In Stock',
+            status: payload.sourceType === 'RETURN' ? 'Returned' : 'In Stock',
             currentLocation: house,
             currentHolder: user.name,
+            sourceType: payload.sourceType === 'RETURN' ? 'Sales Return' : (match.sourceType || 'Movement IN'),
+            saleInvoiceRef: payload.returnSaleInvoiceRef || match.saleInvoiceRef || '',
             lastStatusUpdate: now
           });
         } else {
           appendRowFromObject(SHEETS.IMEI, {
             id: generateId('IMEI'),
             imei1,
-            imei2: imeiRecord.imei2 || '',
-            serialNumber: imeiRecord.serialNumber || '',
+            imei2: imeiRecord.imei2,
+            serialNumber: imeiRecord.serialNumber,
             productId: payload.productId || '',
             sku,
             brand: brand || '',
@@ -793,9 +956,9 @@ function handleSaveMovement(payload, user) {
             status: 'In Stock',
             currentLocation: house,
             currentHolder: user.name,
-            sourceType: 'Movement IN',
+            sourceType: payload.sourceType === 'RETURN' ? 'Sales Return' : 'Movement IN',
             purchaseRef: trxRef,
-            saleInvoiceRef: '',
+            saleInvoiceRef: payload.returnSaleInvoiceRef || '',
             transferRef: '',
             repairRef: '',
             intakeDate: movementDate,
@@ -827,12 +990,12 @@ function handleSaveMovement(payload, user) {
     color,
     house,
     qty: numQty,
-    imeis: Array.isArray(imeis) ? imeis.map(i => i.imei1 || i).join(', ') : '',
+    imeis: normalizedImeis.map(i => i.imei1 || i.serialNumber).filter(Boolean).join(', '),
     sourceLocation: direction === 'OUT' ? house : '',
     destLocation: direction === 'IN' ? house : '',
     user: user.name,
     role: user.role,
-    reason: note || 'Manual Stock Movement',
+    reason: note || (payload.sourceType === 'RETURN' ? 'Sales return received' : 'Manual Stock Movement'),
     date: movementDate,
     timestamp: now,
     metadata: { inHandBefore, inHandAfter }
@@ -842,7 +1005,7 @@ function handleSaveMovement(payload, user) {
   logAudit_({
     user: user.name,
     userRole: user.role,
-    action: direction === 'IN' ? 'RECEIVE_STOCK' : 'DISPATCH_STOCK',
+    action: payload.sourceType === 'RETURN' ? 'RETURN_SALE' : (direction === 'IN' ? 'RECEIVE_STOCK' : 'DISPATCH_STOCK'),
     module: 'Inventory',
     targetId: trxRef,
     previousValue: { inHand: inHandBefore },
@@ -1083,6 +1246,43 @@ function handleUpdateTransferStatus(payload, user) {
 }
 
 /**
+ * Match a scanned transfer manifest against the server-side expected IMEI set.
+ */
+function handleMatchTransferScan(payload, user) {
+  const transferRef = String(payload.transferRef || '').trim();
+  const scanned = (Array.isArray(payload.scannedImeis) ? payload.scannedImeis : [])
+    .map(normalizeIdentifier_)
+    .filter(Boolean);
+  if (!transferRef || scanned.length === 0) {
+    return { success: false, error: 'Transfer reference and scanned IMEI values are required.' };
+  }
+
+  const transfer = getRowsAsObjects(SHEETS.TRANSFERS).find(row => String(row.transferRef) === transferRef);
+  if (!transfer) return { success: false, error: 'Transfer not found: ' + transferRef };
+
+  const expected = String(transfer.imeis || '').split(',').map(normalizeIdentifier_).filter(Boolean);
+  const expectedSet = new Set(expected);
+  const scannedSet = new Set(scanned);
+  const missing = expected.filter(value => !scannedSet.has(value));
+  const unexpected = scanned.filter(value => !expectedSet.has(value));
+  const duplicateScans = scanned.filter((value, index) => scanned.indexOf(value) !== index);
+  const matched = missing.length === 0 && unexpected.length === 0 && duplicateScans.length === 0 && scannedSet.size === expectedSet.size;
+
+  logAudit_({
+    user: user.name,
+    userRole: user.role,
+    action: 'MATCH_TRANSFER',
+    module: 'Transfers',
+    targetId: transferRef,
+    previousValue: { expectedCount: expected.length },
+    newValue: { scannedCount: scanned.length, matched, missing, unexpected, duplicateScans },
+    reason: matched ? 'Transfer scan matched manifest' : 'Transfer scan mismatch detected'
+  });
+
+  return { success: true, matched, transferRef, expected, scanned, missing, unexpected, duplicateScans };
+}
+
+/**
  * Handle POS / Retail Sale
  * Creates invoice, deducts sold stock, registers sale and customer info
  */
@@ -1095,6 +1295,7 @@ function handleProcessSale(payload, user) {
 
   const invoiceNo = generateId('INV-POS');
   const now = new Date().toISOString();
+  const saleDate = normalizeDate_(payload.date, now);
   const saleLocation = location || user.location || 'Retail Counter';
 
   let subtotal = 0;
@@ -1174,7 +1375,7 @@ function handleProcessSale(payload, user) {
       user: user.name,
       role: user.role,
       reason: 'POS Sale: ' + invoiceNo,
-      date: now.slice(0, 10),
+      date: saleDate,
       timestamp: now,
       metadata: { invoiceNo, customerName }
     });
@@ -1197,7 +1398,7 @@ function handleProcessSale(payload, user) {
     paymentStatus,
     soldBy: user.name,
     location: saleLocation,
-    date: now.slice(0, 10),
+    date: saleDate,
     timestamp: now,
     notes: notes || ''
   });
@@ -1213,7 +1414,7 @@ function handleProcessSale(payload, user) {
       paymentMethod: paymentMethod || 'Cash',
       referenceNo: payload.paymentRefNo || '',
       receivedBy: user.name,
-      date: now.slice(0, 10),
+      date: saleDate,
       timestamp: now,
       notes: 'Payment for ' + invoiceNo
     });
@@ -1239,6 +1440,55 @@ function handleProcessSale(payload, user) {
     paymentStatus,
     message: `Sale completed with invoice ${invoiceNo}.`
   };
+}
+
+function handleReconcilePayment(payload, user) {
+  const invoiceNo = String(payload.invoiceNo || '').trim();
+  if (!invoiceNo) return { success: false, error: 'Invoice number is required.' };
+
+  const sales = getRowsAsObjects(SHEETS.SALES);
+  const sale = sales.find(row => String(row.invoiceNo) === invoiceNo);
+  if (!sale) return { success: false, error: 'Invoice not found: ' + invoiceNo };
+
+  const payments = getRowsAsObjects(SHEETS.PAYMENTS)
+    .filter(row => String(row.invoiceNo) === invoiceNo);
+  const paidAmount = payments.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const netAmount = Number(sale.netAmount || sale.totalAmount || 0);
+  const dueAmount = Math.max(0, netAmount - paidAmount);
+  const paymentStatus = dueAmount === 0 ? 'Paid' : (paidAmount > 0 ? 'Partial' : 'Due');
+
+  updateRowById(SHEETS.SALES, sale.id, { paidAmount, dueAmount, paymentStatus });
+  logAudit_({
+    user: user.name,
+    userRole: user.role,
+    action: 'RECONCILE_PAYMENT',
+    module: 'Payments',
+    targetId: invoiceNo,
+    previousValue: { paidAmount: sale.paidAmount, dueAmount: sale.dueAmount, paymentStatus: sale.paymentStatus },
+    newValue: { paidAmount, dueAmount, paymentStatus },
+    reason: 'Payment ledger reconciled against invoice'
+  });
+
+  return { success: true, invoiceNo, paidAmount, dueAmount, paymentStatus, paymentCount: payments.length };
+}
+
+function handleValidateOcrCandidate(payload) {
+  const candidate = {
+    imei1: normalizeIdentifier_(payload.imei1),
+    imei2: normalizeIdentifier_(payload.imei2),
+    serialNumber: normalizeSerial_(payload.serialNumber),
+    sku: String(payload.sku || '').trim()
+  };
+  const validation = {
+    imei1Valid: !candidate.imei1 || isValidImei_(candidate.imei1),
+    imei2Valid: !candidate.imei2 || isValidImei_(candidate.imei2),
+    fieldsPresent: Boolean(candidate.imei1 || candidate.imei2 || candidate.serialNumber || candidate.sku)
+  };
+  if (!validation.imei1Valid || !validation.imei2Valid) {
+    return { success: false, verified: false, candidate, validation, error: 'OCR result requires a valid 15-digit IMEI or manual correction.', errorCode: 'OCR_REVIEW_REQUIRED' };
+  }
+  const duplicate = handleCheckDuplicateImei(candidate);
+  return { success: duplicate.success, verified: !duplicate.isDuplicate, candidate, validation, duplicate };
 }
 
 /**
@@ -1599,6 +1849,29 @@ function handleGetAuditLog(payload) {
     success: true,
     logs: sorted.slice(0, limit)
   };
+}
+
+function handleExportAuditReport(payload, user) {
+  const logs = handleGetAuditLog({ limit: 10000 }).logs;
+  const from = payload.from ? normalizeDate_(payload.from, payload.from) : '';
+  const to = payload.to ? normalizeDate_(payload.to, payload.to) : '';
+  const filtered = logs.filter(log => {
+    const date = normalizeDate_(log.timestamp, log.timestamp);
+    return (!from || date >= from) && (!to || date <= to);
+  });
+  const headers = ['timestamp', 'user', 'userRole', 'action', 'module', 'targetId', 'reason'];
+  const csv = [headers.join(',')].concat(filtered.map(log => headers.map(header => `"${String(log[header] || '').replace(/"/g, '""')}"`).join(','))).join('\n');
+  logAudit_({
+    user: user.name,
+    userRole: user.role,
+    action: 'EXPORT_AUDIT',
+    module: 'Audit',
+    targetId: 'AuditReport',
+    previousValue: '',
+    newValue: { rows: filtered.length, from, to },
+    reason: 'Audit report exported'
+  });
+  return { success: true, format: 'csv', rows: filtered.length, csv };
 }
 
 /**

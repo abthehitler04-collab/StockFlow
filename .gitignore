@@ -8,6 +8,7 @@ Thumbs.db
 backups/
 *.json.backup
 node_modules/
+build/
 
 # Android / Flutter build outputs
 apps/android/build/
@@ -18,6 +19,7 @@ apps/android/android/local.properties
 apps/android/android/app/release/
 apps/android/android/key.properties
 apps/android/android/.gradle/
+apps/android/android/.kotlin/
 apps/android/.flutter-plugins
 apps/android/.flutter-plugins-dependencies
 
