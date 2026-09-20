@@ -214,7 +214,7 @@ class _StockFlowDesktopHomeState extends State<StockFlowDesktopHome> {
         children: [
           const Text('StockFlow Dashboard', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text('API endpoint: placeholder', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          Text('API endpoint: ${StockFlowApiClient.defaultUrl}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 20),
           Wrap(
             spacing: 16,

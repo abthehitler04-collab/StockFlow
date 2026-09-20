@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Users/abthe/Desktop/stockflow - Copy/apps/windows/windows"
+    "cmake.sourceDirectory": "C:/Users/abthe/Desktop/stockflow - Copy/apps/windows/windows",
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

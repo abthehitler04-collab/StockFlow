@@ -1,25 +1,34 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 class StockFlowApiClient {
   const StockFlowApiClient();
 
-  static const String defaultUrl = 'https://script.google.com/macros/s/AKfycbw.../exec';
+  static const String defaultUrl = String.fromEnvironment(
+    'STOCKFLOW_API_URL',
+    defaultValue: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
+  );
 
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
-    final payload = {
+    return _post({
       'action': 'login',
       'email': email,
       'password': password,
-    };
-
-    return _post(payload);
+    });
   }
 
   Future<Map<String, dynamic>> syncInventory() async {
     return _post({
       'action': 'syncAll',
-      'user': {'email': 'system@stockflow.internal', 'role': 'Super Admin', 'name': 'System'},
+      'user': {
+        'email': 'system@stockflow.internal',
+        'role': 'Super Admin',
+        'name': 'System',
+      },
     });
   }
 
@@ -27,17 +36,48 @@ class StockFlowApiClient {
     return _post({
       'action': 'saveMovement',
       'movement': movement,
-      'user': {'email': 'system@stockflow.internal', 'role': 'Super Admin', 'name': 'System'},
+      'user': {
+        'email': 'system@stockflow.internal',
+        'role': 'Super Admin',
+        'name': 'System',
+      },
     });
   }
 
   Future<Map<String, dynamic>> _post(Map<String, dynamic> payload) async {
-    // Placeholder client for the production contract.
-    // Replace defaultUrl with the deployed Apps Script Web App URL in production.
-    return {
-      'success': true,
-      'payload': payload,
-      'message': 'API contract ready for deployment',
-    };
+    try {
+      final response = await http
+          .post(
+            Uri.parse(defaultUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+
+        return {
+          'success': true,
+          'payload': decoded,
+        };
+      }
+
+      return {
+        'success': false,
+        'error': 'Request failed: ${response.statusCode} ${response.reasonPhrase}',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'HTTP request failed: $e',
+      };
+    }
   }
 }
