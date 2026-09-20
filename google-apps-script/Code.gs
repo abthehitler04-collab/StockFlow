@@ -129,16 +129,6 @@ function doPost(e) {
       if (priorRequest) {
         return jsonResponse({ success: true, duplicateRequest: true, idempotencyKey, message: 'Request already applied.' });
       }
-      logAudit_({
-        user: user.name,
-        userRole: user.role,
-        action: action,
-        module: 'API',
-        targetId: idempotencyKey,
-        previousValue: '',
-        newValue: { accepted: true },
-        reason: 'Idempotent request accepted'
-      });
     }
 
     // Action Router
@@ -245,6 +235,19 @@ function doPost(e) {
 
       default:
         result = { success: false, error: 'Unknown API action: ' + action };
+    }
+
+    if (idempotencyKey && result && result.success !== false) {
+      logAudit_({
+        user: user.name,
+        userRole: user.role,
+        action: action,
+        module: 'API',
+        targetId: idempotencyKey,
+        previousValue: '',
+        newValue: { applied: true },
+        reason: 'Idempotent request applied successfully'
+      });
     }
 
     return jsonResponse(result);
