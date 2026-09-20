@@ -8,6 +8,7 @@ Thumbs.db
 backups/
 *.json.backup
 node_modules/
+build/
 
 # Android / Flutter build outputs
 apps/android/build/
