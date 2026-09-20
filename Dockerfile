@@ -1,13 +1,11 @@
-FROM python:3.12-slim
+FROM php:8.3-apache
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PORT=3000
+WORKDIR /var/www/html
 
-WORKDIR /app
+COPY . /var/www/html/
 
-COPY . /app
+RUN a2enmod headers rewrite \
+    && chown -R www-data:www-data /var/www/html/storage \
+    && chmod -R 750 /var/www/html/storage
 
-EXPOSE 3000
-
-CMD ["python", "-m", "http.server", "3000", "--bind", "0.0.0.0"]
+EXPOSE 80
