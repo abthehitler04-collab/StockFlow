@@ -33,6 +33,7 @@ class _StockFlowAuthGateState extends State<StockFlowAuthGate> {
   final _apiClient = const StockFlowApiClient();
   bool _isLoading = false;
   bool _isAuthenticated = false;
+  Map<String, dynamic>? _user;
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -47,7 +48,10 @@ class _StockFlowAuthGateState extends State<StockFlowAuthGate> {
     setState(() => _isLoading = false);
 
     if (response['success'] == true) {
-      setState(() => _isAuthenticated = true);
+      setState(() {
+        _isAuthenticated = true;
+        _user = Map<String, dynamic>.from(response['user'] as Map);
+      });
       return;
     }
 
@@ -59,7 +63,7 @@ class _StockFlowAuthGateState extends State<StockFlowAuthGate> {
   @override
   Widget build(BuildContext context) {
     if (_isAuthenticated) {
-      return const StockFlowMobileHome();
+      return StockFlowMobileHome(user: _user!);
     }
 
     return Scaffold(
@@ -130,7 +134,9 @@ class _StockFlowAuthGateState extends State<StockFlowAuthGate> {
 }
 
 class StockFlowMobileHome extends StatefulWidget {
-  const StockFlowMobileHome({super.key});
+  const StockFlowMobileHome({super.key, required this.user});
+
+  final Map<String, dynamic> user;
 
   @override
   State<StockFlowMobileHome> createState() => _StockFlowMobileHomeState();
@@ -192,7 +198,7 @@ class _StockFlowMobileHomeState extends State<StockFlowMobileHome> {
   }
 
   Future<void> _syncInventory() async {
-    final result = await _apiClient.syncInventory();
+    final result = await _apiClient.syncInventory(user: widget.user);
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(

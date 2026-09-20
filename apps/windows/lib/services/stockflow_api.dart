@@ -18,30 +18,22 @@ class StockFlowApiClient {
     return _post({
       'action': 'login',
       'email': email,
-      'password': password,
+      'pin': password,
     });
   }
 
-  Future<Map<String, dynamic>> syncInventory() async {
+  Future<Map<String, dynamic>> syncInventory({required Map<String, dynamic> user}) async {
     return _post({
       'action': 'syncAll',
-      'user': {
-        'email': 'system@stockflow.internal',
-        'role': 'Super Admin',
-        'name': 'System',
-      },
+      'user': user,
     });
   }
 
-  Future<Map<String, dynamic>> saveMovement(Map<String, dynamic> movement) async {
+  Future<Map<String, dynamic>> saveMovement(Map<String, dynamic> movement, {required Map<String, dynamic> user}) async {
     return _post({
       'action': 'saveMovement',
       'movement': movement,
-      'user': {
-        'email': 'system@stockflow.internal',
-        'role': 'Super Admin',
-        'name': 'System',
-      },
+      'user': user,
     });
   }
 

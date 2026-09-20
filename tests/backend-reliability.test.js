@@ -15,7 +15,7 @@ function loadBackendHelpers() {
     }
   };
   vm.createContext(context);
-  vm.runInContext(`${source}\nthis.testHelpers = { normalizeIdentifier_, normalizeSerial_, isValidImei_, normalizeDate_, classifyAuditAction_ };`, context);
+  vm.runInContext(`${source}\nthis.testHelpers = { normalizeIdentifier_, normalizeSerial_, isValidImei_, normalizeDate_, classifyAuditAction_, resolveRequestUser_ };`, context);
   return context.testHelpers;
 }
 
@@ -35,8 +35,15 @@ test('backend normalizes dates and classifies audit events', () => {
   assert.equal(helpers.normalizeDate_('2026-09-21T14:30:00Z', '2026-01-01'), '2026-09-21');
   assert.equal(helpers.normalizeDate_('not-a-date', '2026-01-01'), '2026-01-01');
   assert.equal(helpers.classifyAuditAction_('BACKUP', 'System'), 'CREATE_BACKUP');
-  assert.equal(helpers.classifyAuditAction_('anything', 'Transfers'), 'UPDATE_TRANSFER_STATUS');
+  assert.equal(helpers.classifyAuditAction_('anything', 'Transfers'), 'UPDATE');
   assert.equal(helpers.classifyAuditAction_('anything', 'Payments'), 'UPDATE');
+});
+
+test('audit classification does not infer business events from module text', () => {
+  const helpers = loadBackendHelpers();
+  assert.equal(helpers.classifyAuditAction_('PROCESS_SALE', 'Anything'), 'PROCESS_SALE');
+  assert.equal(helpers.classifyAuditAction_('BACKUP', 'System'), 'CREATE_BACKUP');
+  assert.equal(helpers.classifyAuditAction_('PROCESS_SALE_NOW', 'Sales'), 'UPDATE');
 });
 
 test('backend exposes the Phase 2 and Phase 3 API actions', () => {

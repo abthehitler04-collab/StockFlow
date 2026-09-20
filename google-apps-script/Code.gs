@@ -62,6 +62,13 @@ const PERMISSION_MATRIX = {
   'EXPORT_DATA': [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.WAREHOUSE_MGR, ROLES.ACCOUNTS]
 };
 
+const AUDIT_EVENT_TYPES = [
+  'LOGIN', 'INITIALIZE', 'RECEIVE_STOCK', 'DISPATCH_STOCK', 'CREATE_TRANSFER',
+  'UPDATE_TRANSFER_STATUS', 'MATCH_TRANSFER', 'PROCESS_SALE', 'RETURN_SALE',
+  'RECONCILE_PAYMENT', 'CREATE_REPAIR', 'UPDATE_REPAIR', 'CREATE_BACKUP',
+  'EXPORT_AUDIT', 'CREATE_USER', 'UPDATE_USER', 'ASSIGN_TASK', 'UPDATE'
+];
+
 /**
  * HTTP GET Handler (Health check, JSONP, Quick Sync)
  */
@@ -79,7 +86,14 @@ function doGet(e) {
   }
   
   if (action === 'syncAll') {
-    return jsonResponse(handleSyncAll(params.userEmail || 'system'), params.callback);
+    try {
+      const user = resolveRequestUser_({ email: params.userEmail });
+      checkPermission(user.role, 'VIEW');
+      return jsonResponse(handleSyncAll(user.email), params.callback);
+    } catch (err) {
+      const apiError = normalizeApiError_(err);
+      return jsonResponse({ success: false, error: apiError.message, errorCode: apiError.code }, params.callback);
+    }
   }
 
   return jsonResponse({
@@ -117,10 +131,14 @@ function doPost(e) {
     }
 
     const action = payload.action;
-    const user = payload.user || { email: 'system@stockflow.internal', role: 'Super Admin', name: 'System' };
+    let user = payload.user || null;
 
     if (!action) {
       return jsonResponse({ success: false, error: 'Action parameter is required.' });
+    }
+
+    if (!['login', 'setupDatabase'].includes(action)) {
+      user = resolveRequestUser_(user);
     }
 
     const idempotencyKey = String(payload.idempotencyKey || '').trim();
@@ -290,6 +308,24 @@ function checkPermission(userRole, permissionRequired) {
   }
 }
 
+function resolveRequestUser_(candidate) {
+  if (!candidate || !candidate.email) {
+    throw new Error('Authenticated user context is required.');
+  }
+  const email = String(candidate.email).trim().toLowerCase();
+  const user = getRowsAsObjects(SHEETS.USERS).find(row =>
+    String(row.email).trim().toLowerCase() === email && String(row.status).toLowerCase() === 'active'
+  );
+  if (!user) throw new Error('Authenticated user is not active or is not allowlisted.');
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    location: user.location
+  };
+}
+
 /**
  * Generate Secure Unique IDs
  */
@@ -352,18 +388,8 @@ function normalizeApiError_(err) {
 
 function classifyAuditAction_(action, module) {
   const value = String(action || 'UPDATE').toUpperCase();
-  const known = [
-    'LOGIN', 'INITIALIZE', 'RECEIVE_STOCK', 'DISPATCH_STOCK', 'CREATE_TRANSFER',
-    'UPDATE_TRANSFER_STATUS', 'MATCH_TRANSFER', 'PROCESS_SALE', 'RETURN_SALE', 'RECONCILE_PAYMENT',
-    'CREATE_REPAIR', 'UPDATE_REPAIR', 'BACKUP', 'CREATE_BACKUP', 'EXPORT_AUDIT', 'UPDATE'
-  ];
   if (value === 'BACKUP') return 'CREATE_BACKUP';
-  if (known.includes(value)) return value;
-  if (/transfer/i.test(module || value)) return 'UPDATE_TRANSFER_STATUS';
-  if (/sale|invoice/i.test(module || value)) return 'PROCESS_SALE';
-  if (/repair|service/i.test(module || value)) return 'UPDATE_REPAIR';
-  if (/backup/i.test(module || value)) return 'CREATE_BACKUP';
-  return 'UPDATE';
+  return AUDIT_EVENT_TYPES.includes(value) ? value : 'UPDATE';
 }
 
 /**
