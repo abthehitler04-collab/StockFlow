@@ -56,7 +56,9 @@ if (-not $SkipWindowsBuild) {
 Push-Location $repoRoot
 try {
     git add .
-    if (-not (git diff --cached --quiet)) {
+    git diff --cached --quiet
+    $hasStagedChanges = $LASTEXITCODE -ne 0
+    if ($hasStagedChanges) {
         git commit -m $CommitMessage
         if ($LASTEXITCODE -ne 0) {
             throw 'Git commit failed.'
